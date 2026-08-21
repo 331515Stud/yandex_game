@@ -2106,86 +2106,98 @@ const AVAILABLE_VECTORS = [
   // Descriptions live in UPGRADES; BUILD_VECTORS holds effects — merge both.
   const TREE_DESC = {};
   for (let i = 0; i < UPGRADES.length; i++) TREE_DESC[UPGRADES[i].id] = UPGRADES[i].desc || '';
-
-  // Graph layout: радиальная паутина без пересечений
-  // Каждый узел размещается в секторе своего родителя
-  const TREE_NODE_R = 34;
-  const TREE_RING_R = [550, 950, 1450, 2050]; // Радиусы колец
-  const MIN_CHILD_ANGLE = 18; // Минимальный угол между детьми одного родителя
+  // === НОВАЯ СИСТЕМА: 4 ОТДЕЛЬНЫЕ ВКЛАДКИ С ДЕРЕВЬЯМИ ===
+  // Каждая категория имеет своё собственное дерево без пересечений
   
-  let TREE_W = 0, TREE_H = 0, TREE_HUB = { x: 0, y: 0 };
+  const SKILL_TABS = ['dmg', 'speed', 'multi', 'hp'];
+  const TAB_NAMES = { dmg: 'Урон', speed: 'Скорость', multi: 'Мультивыстрел', hp: 'Здоровье' };
+  const TAB_COLORS = { dmg: '#ff6b6b', speed: '#4ecdc4', multi: '#a55eea', hp: '#26de81' };
   
-  // Структура дерева: каждый элемент — это список детей для данного узла
+  let currentTab = 'dmg';
+  
+  // Структура дерева для каждой категории
   const TREE_STRUCTURE = {
-    null: ['dmg', 'speed', 'multi', 'hp'], // Корневые узлы
-    dmg: ['rate', 'dmg2', 'crit'],
-    speed: ['magnet', 'aspeed'],
-    multi: ['pierce', 'sideshot', 'backshot', 'multi2', 'w_spiral', 'epoison'],
-    hp: ['shield', 'regen', 'healUp'],
-    
-    rate: ['rate2', 'bounce', 'through'],
-    dmg2: ['dmg3'],
-    crit: ['crit2'],
-    
-    magnet: ['speed2', 'magnet2'],
-    aspeed: ['aspeed2'],
-    
-    pierce: ['pierce2'],
-    sideshot: ['melee', 'sideshot2'],
-    backshot: ['backshot2'],
-    multi2: ['multi3', 'w_orbit'],
-    w_spiral: [],
-    epoison: ['efire', 'eice', 'enet'],
-    
-    shield: ['hp2', 'shield2'],
-    regen: ['vamp', 'regen2'],
-    healUp: [],
-    
-    rate2: ['rate3'],
-    bounce: [],
-    through: ['bomb'],
-    
-    speed2: [],
-    magnet2: [],
-    aspeed2: [],
-    
-    pierce2: [],
-    melee: [],
-    sideshot2: [],
-    backshot2: [],
-    multi3: ['multi4'],
-    w_orbit: [],
-    
-    hp2: [],
-    shield2: [],
-    vamp: [],
-    regen2: [],
-    
-    rate3: [],
-    bomb: [],
-    
-    multi4: [],
-    efire: ['efire2'],
-    eice: ['eice2'],
-    enet: ['epoison2'],
-    
-    w_wave: [],
-    efire2: [],
-    eice2: [],
-    epoison2: []
+    dmg: {
+      null: ['dmg'],
+      dmg: ['rate', 'dmg2', 'crit'],
+      rate: ['rate2', 'bounce', 'through'],
+      dmg2: ['dmg3'],
+      crit: ['crit2'],
+      rate2: ['rate3'],
+      through: ['bomb'],
+      rate3: [],
+      dmg3: [],
+      crit2: [],
+      bounce: [],
+      bomb: []
+    },
+    speed: {
+      null: ['speed'],
+      speed: ['magnet', 'aspeed'],
+      magnet: ['speed2', 'magnet2'],
+      aspeed: ['aspeed2'],
+      speed2: [],
+      magnet2: [],
+      aspeed2: []
+    },
+    multi: {
+      null: ['multi'],
+      multi: ['pierce', 'sideshot', 'backshot', 'multi2', 'w_spiral'],
+      pierce: ['pierce2'],
+      sideshot: ['melee', 'sideshot2'],
+      backshot: ['backshot2'],
+      multi2: ['multi3', 'w_orbit'],
+      w_spiral: ['epoison'],
+      pierce2: [],
+      melee: [],
+      sideshot2: [],
+      backshot2: [],
+      multi3: ['multi4', 'w_wave'],
+      w_orbit: [],
+      epoison: ['efire', 'eice', 'enet'],
+      multi4: [],
+      w_wave: [],
+      efire: ['efire2'],
+      eice: ['eice2'],
+      enet: ['epoison2'],
+      efire2: [],
+      eice2: [],
+      epoison2: []
+    },
+    hp: {
+      null: ['hp'],
+      hp: ['shield', 'regen', 'healUp'],
+      shield: ['hp2', 'shield2'],
+      regen: ['vamp', 'regen2'],
+      healUp: [],
+      hp2: [],
+      shield2: [],
+      vamp: [],
+      regen2: []
+    }
   };
-
-  const SKILL_TREE = {};
   
-  (function buildTree() {
-    // Шаг 1: Размещаем корневые узлы равномерно по кругу (4 узла = 90° друг от друга)
-    const rootIds = TREE_STRUCTURE.null;
-    const rootAngleStep = 360 / rootIds.length;
-    const rootStartAngle = -90; // Начинаем сверху
+  // Параметры отрисовки для каждой вкладки
+  const TREE_NODE_R = 28;
+  const TREE_RING_R = [0, 180, 360, 540, 720];
+  const MIN_CHILD_ANGLE = 22;
+  
+  // Кэш позиций узлов для каждой вкладки
+  const SKILL_TREES = {};
+  
+  // Построение дерева для конкретной категории
+  function buildSkillTree(tabId) {
+    const structure = TREE_STRUCTURE[tabId];
+    if (!structure) return {};
+    
+    const tree = {};
+    const rootIds = structure.null || [];
+    const rootAngleStep = 360 / Math.max(rootIds.length, 1);
+    const rootStartAngle = -90;
     
     rootIds.forEach((id, idx) => {
-      const angle = rootStartAngle + idx * rootAngleStep;
-      SKILL_TREE[id] = {
+      const angle = rootIds.length === 1 ? -90 : (rootStartAngle + idx * rootAngleStep);
+      tree[id] = {
         parent: null,
         tier: 0,
         angle: angle,
@@ -2194,26 +2206,24 @@ const AVAILABLE_VECTORS = [
       };
     });
     
-    // Шаг 2: Рекурсивно размещаем детей в секторах родителей
     function placeChildren(parentId, tier) {
-      const children = TREE_STRUCTURE[parentId] || [];
+      const children = structure[parentId] || [];
       if (children.length === 0) return;
       
-      const parent = SKILL_TREE[parentId];
-      const sectorWidth = parent.sectorEnd - parent.sectorStart;
-      const availableWidth = sectorWidth - MIN_CHILD_ANGLE; // Оставляем запас по краям
+      const parent = tree[parentId];
+      if (!parent) return;
       
-      // Если детей много, расширяем сектор немного
+      const sectorWidth = parent.sectorEnd - parent.sectorStart;
       const minNeeded = children.length * MIN_CHILD_ANGLE;
-      const actualWidth = Math.max(availableWidth, minNeeded);
+      const actualWidth = Math.max(sectorWidth * 0.8, minNeeded);
       const startAngle = parent.angle - actualWidth / 2;
-      const step = actualWidth / Math.max(children.length - 1, 1);
+      const step = children.length === 1 ? 0 : (actualWidth / (children.length - 1));
       
       children.forEach((childId, idx) => {
         const childAngle = children.length === 1 ? parent.angle : (startAngle + step * idx);
         const childSectorWidth = actualWidth / children.length;
         
-        SKILL_TREE[childId] = {
+        tree[childId] = {
           parent: parentId,
           tier: tier,
           angle: childAngle,
@@ -2221,38 +2231,19 @@ const AVAILABLE_VECTORS = [
           sectorEnd: childAngle + childSectorWidth / 2
         };
         
-        // Рекурсивно размещаем детей этого узла
         placeChildren(childId, tier + 1);
       });
     }
     
-    // Запускаем размещение для всех корневых узлов
     rootIds.forEach(id => placeChildren(id, 1));
-  })();
-  
-  // Добавляем w_wave как ребенка multi3 постфактум
-  if (SKILL_TREE.multi3) {
-    const multi3Node = SKILL_TREE.multi3;
-    const sectorWidth = 25;
-    const wWaveAngle = multi3Node.sectorStart + sectorWidth / 2;
-    SKILL_TREE.w_wave = {
-      parent: 'multi3',
-      tier: 3,
-      angle: wWaveAngle,
-      sectorStart: multi3Node.sectorStart,
-      sectorEnd: multi3Node.sectorStart + sectorWidth
-    };
-  }
-
-  // Вычисляем координаты и размеры
-  (function computeCoords() {
-    const pad = TREE_NODE_R + 52;
+    
+    const pad = TREE_NODE_R + 40;
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
     
-    for (const id in SKILL_TREE) {
-      const n = SKILL_TREE[id];
+    for (const id in tree) {
+      const n = tree[id];
       const a = n.angle * Math.PI / 180;
-      const r = TREE_RING_R[n.tier] || (n.tier * 500);
+      const r = TREE_RING_R[n.tier] || (n.tier * 180);
       n.x = Math.round(Math.cos(a) * r);
       n.y = Math.round(Math.sin(a) * r);
       
@@ -2264,30 +2255,43 @@ const AVAILABLE_VECTORS = [
     
     const ox = pad - minX;
     const oy = pad - minY;
+    const width = (maxX - minX) + pad * 2;
+    const height = (maxY - minY) + pad * 2;
     
-    for (const id in SKILL_TREE) {
-      SKILL_TREE[id].x += ox;
-      SKILL_TREE[id].y += oy;
+    for (const id in tree) {
+      tree[id].x += ox;
+      tree[id].y += oy;
     }
     
-    TREE_HUB.x = ox;
-    TREE_HUB.y = oy;
-    TREE_W = (maxX - minX) + pad * 2;
-    TREE_H = (maxY - minY) + pad * 2;
-  })();
-
+    tree._hub = { x: ox, y: oy };
+    tree._width = width;
+    tree._height = height;
+    
+    return tree;
+  }
+  
+  SKILL_TABS.forEach(tab => {
+    SKILL_TREES[tab] = buildSkillTree(tab);
+  });
+  
   let treeOpen = false;
   let treeSelectedNode = null;
-  const treeNodes = {};   // id -> node element
-  const treeEdges = {};   // id -> line element (core→root for roots, parent→child otherwise)
+  let treeDragMoved = false;
+  const treeNodes = {};
+  const treeEdges = {};
+
+  // Вспомогательные функции для работы с деревом
+  function getCurrentTree() {
+    return SKILL_TREES[currentTab] || {};
+  }
 
   function isNodeTaken(id) {
     return !!(G.player && G.player.build[id]);
   }
 
-  // Available = condition met AND (root OR parent already taken)
   function isNodeAvailable(id) {
-    const node = SKILL_TREE[id];
+    const tree = getCurrentTree();
+    const node = tree[id];
     if (!node || !G.player) return false;
     const vector = BUILD_VECTORS[id];
     if (!vector || !vector.cond(G.player)) return false;
@@ -2295,27 +2299,47 @@ const AVAILABLE_VECTORS = [
     return isNodeTaken(node.parent);
   }
 
+  function updateTreeHeader() {
+    if (!treeSubtitle) return;
+    const n = Math.max(0, G.pendingLevels);
+    treeSubtitle.textContent = n > 1
+      ? 'Вершин к выбору: ' + n + ' — двигайся вглубь дерева'
+      : 'Выбери вершину графа и подтверди';
+    
+    // Обновляем заголовок вкладки
+    const titleEl = document.getElementById('tree-title');
+    if (titleEl) {
+      titleEl.textContent = 'Дерево: ' + TAB_NAMES[currentTab];
+      titleEl.style.color = TAB_COLORS[currentTab];
+    }
+  }
+
   function renderTree() {
     treeCanvasEl.innerHTML = '';
-    treeCanvasEl.style.width = TREE_W + 'px';
-    treeCanvasEl.style.height = TREE_H + 'px';
+    const tree = getCurrentTree();
+    const width = tree._width || 600;
+    const height = tree._height || 600;
+    
+    treeCanvasEl.style.width = width + 'px';
+    treeCanvasEl.style.height = height + 'px';
+    
     for (const k in treeNodes) delete treeNodes[k];
     for (const k in treeEdges) delete treeEdges[k];
 
     const svgNS = 'http://www.w3.org/2000/svg';
     const svg = document.createElementNS(svgNS, 'svg');
-    svg.setAttribute('width', TREE_W);
-    svg.setAttribute('height', TREE_H);
+    svg.setAttribute('width', width);
+    svg.setAttribute('height', height);
     svg.classList.add('tree-edges');
 
-    for (const id in SKILL_TREE) {
-      const node = SKILL_TREE[id];
-      if (node.parent === null) continue; // Пропускаем корневые узлы
-      const from = SKILL_TREE[node.parent];
-      if (!from) {
-        console.warn(`Skill ${id} has invalid parent: ${node.parent}`);
-        continue; // Пропускаем узлы с несуществующим родителем
-      }
+    // Рисуем линии от родителя к детям
+    for (const id in tree) {
+      if (id.startsWith('_')) continue;
+      const node = tree[id];
+      if (node.parent === null) continue;
+      const from = tree[node.parent];
+      if (!from) continue;
+      
       const line = document.createElementNS(svgNS, 'line');
       line.setAttribute('x1', from.x);
       line.setAttribute('y1', from.y);
@@ -2326,17 +2350,22 @@ const AVAILABLE_VECTORS = [
     }
     treeCanvasEl.appendChild(svg);
 
+    // Рисуем корневой узел (хаб)
     const hub = document.createElement('div');
     hub.className = 'skill-hub';
-    hub.style.left = TREE_HUB.x + 'px';
-    hub.style.top = TREE_HUB.y + 'px';
-    hub.innerHTML = '<span>ЯДРО</span>';
+    hub.style.left = tree._hub.x + 'px';
+    hub.style.top = tree._hub.y + 'px';
+    hub.innerHTML = '<span>' + TAB_NAMES[currentTab].toUpperCase()[0] + '</span>';
+    hub.style.setProperty('--hub-color', TAB_COLORS[currentTab]);
     treeCanvasEl.appendChild(hub);
 
-    for (const id in SKILL_TREE) {
-      const node = SKILL_TREE[id];
+    // Рисуем узлы
+    for (const id in tree) {
+      if (id.startsWith('_')) continue;
+      const node = tree[id];
       const vector = BUILD_VECTORS[id];
       if (!vector) continue;
+      
       const el = document.createElement('div');
       el.className = 'skill-node';
       el.dataset.nodeId = id;
@@ -2360,7 +2389,9 @@ const AVAILABLE_VECTORS = [
 
   function refreshTreeStates() {
     if (!G.player) return;
-    for (const id in SKILL_TREE) {
+    const tree = getCurrentTree();
+    
+    for (const id in treeNodes) {
       const el = treeNodes[id];
       if (!el) continue;
       const available = isNodeAvailable(id);
@@ -2370,17 +2401,21 @@ const AVAILABLE_VECTORS = [
       const badge = el.querySelector('.skill-count');
       if (badge) badge.textContent = count > 1 ? 'x' + count : '';
     }
+    
     for (const id in treeEdges) {
-      const node = SKILL_TREE[id];
+      const node = tree[id];
       const line = treeEdges[id];
+      if (!node) continue;
+      
       const parentTaken = node.parent === null ? true : isNodeTaken(node.parent);
       const taken = isNodeTaken(id);
       const available = isNodeAvailable(id);
+      
       if (taken) {
         line.setAttribute('stroke', 'rgba(255,255,255,0.75)');
         line.setAttribute('stroke-width', '3');
       } else if (parentTaken && available) {
-        line.setAttribute('stroke', '#6ee7ff');
+        line.setAttribute('stroke', TAB_COLORS[currentTab]);
         line.setAttribute('stroke-width', '3');
       } else {
         line.setAttribute('stroke', 'rgba(255,255,255,0.13)');
@@ -2391,7 +2426,8 @@ const AVAILABLE_VECTORS = [
 
   function showTreeDetail(id) {
     const vector = BUILD_VECTORS[id];
-    const node = SKILL_TREE[id];
+    const tree = getCurrentTree();
+    const node = tree[id];
     if (!vector || !node || !G.player) return;
     const count = G.player.build[id] || 0;
     const available = isNodeAvailable(id);
@@ -2400,35 +2436,49 @@ const AVAILABLE_VECTORS = [
     treeDetailIcon.style.color = vector.color;
     treeDetailName.textContent = vector.name;
     treeDetailDesc.textContent = TREE_DESC[id] || '';
+    treeDetailStatus.textContent = available
+      ? (count > 0 ? 'Улучшено ' + count + ' раз' : 'Доступно')
+      : (count > 0 ? 'Изучено' : 'Заблокировано');
+    treeDetailStatus.dataset.state = available ? 'available' : (count ? 'taken' : 'locked');
 
-    let statusText = '', statusColor = '';
-    if (available) {
-      statusText = count > 0 ? 'Взято x' + count + ' — можно усилить снова' : 'Доступно к выбору';
-      statusColor = '#6ee7ff';
-    } else if (node.parent !== null && !isNodeTaken(node.parent)) {
-      statusText = 'Сначала возьми: «' + BUILD_VECTORS[node.parent].name + '»';
-      statusColor = '#ffae42';
-    } else {
-      statusText = 'Условие пока не выполнено';
-      statusColor = '#ff5a3d';
-    }
-    treeDetailStatus.textContent = statusText;
-    treeDetailStatus.style.color = statusColor;
-    if (btnTreeConfirm) btnTreeConfirm.disabled = !available;
+    btnTreeConfirm.disabled = !available || treeSelectedNode !== id;
   }
 
   function resetTreeDetail() {
     treeDetailIcon.innerHTML = '';
-    treeDetailName.textContent = 'Выбери вершину';
-    treeDetailDesc.textContent = 'Нажми на вершину графа, чтобы увидеть улучшение';
+    treeDetailName.textContent = '';
+    treeDetailDesc.textContent = '';
     treeDetailStatus.textContent = '';
-    if (btnTreeConfirm) btnTreeConfirm.disabled = true;
+    btnTreeConfirm.disabled = true;
   }
 
-  function updateTreeHeader() {
-    if (!treeSubtitle) return;
-    const n = Math.max(0, G.pendingLevels);
-    treeSubtitle.textContent = n > 1
+  // Создаём кнопки переключения вкладок
+  function createSkillTabs() {
+    const tabsContainer = document.getElementById('tree-tabs');
+    if (!tabsContainer) return;
+    
+    tabsContainer.innerHTML = '';
+    SKILL_TABS.forEach(tabId => {
+      const btn = document.createElement('button');
+      btn.className = 'tree-tab';
+      btn.textContent = TAB_NAMES[tabId];
+      btn.dataset.tab = tabId;
+      btn.style.setProperty('--tab-color', TAB_COLORS[tabId]);
+      if (tabId === currentTab) btn.classList.add('active');
+      
+      btn.addEventListener('click', () => {
+        currentTab = tabId;
+        treeSelectedNode = null;
+        document.querySelectorAll('.tree-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderTree();
+        refreshTreeStates();
+        updateTreeHeader();
+      });
+      
+      tabsContainer.appendChild(btn);
+    });
+  }
       ? 'Вершин к выбору: ' + n + ' — двигайся вглубь дерева'
       : 'Выбери вершину графа и подтверди';
   }
@@ -2451,7 +2501,7 @@ const AVAILABLE_VECTORS = [
   function treeFitView() {
     const vw = treeViewport.clientWidth, vh = treeViewport.clientHeight;
     if (!vw || !vh) return;
-    const s = Math.max(0.35, Math.min(vw / TREE_W, vh / TREE_H, 1.15));
+    const tree = getCurrentTree(); const tw = tree._width || 600; const th = tree._height || 600; const s = Math.max(0.35, Math.min(vw / tw, vh / th, 1.15));
     view = { s: s, x: (vw - TREE_W * s) / 2, y: (vh - TREE_H * s) / 2 };
     treeApplyView();
   }
@@ -2523,6 +2573,7 @@ const AVAILABLE_VECTORS = [
   window.addEventListener('resize', () => { if (treeOpen) treeFitView(); });
 
   // ---------- Open / confirm / close ----------
+  createSkillTabs();
   function openTree() {
     if (!G.player || treeOpen) return;
     treeOpen = true;
