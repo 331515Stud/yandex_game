@@ -80,6 +80,34 @@
   const isTouch = 'ontouchstart' in window;
   const joyEl = document.getElementById('joy');
   const joyKnob = document.getElementById('joy-knob');
+  const btnFire = document.getElementById('btn-fire');
+
+  // Mobile fire button handler
+  if (isTouch && btnFire) {
+    btnFire.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      audioInit();
+      G.mobileFiring = true;
+    }, { passive: false });
+    
+    btnFire.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      G.mobileFiring = false;
+    });
+    
+    btnFire.addEventListener('mousedown', () => {
+      audioInit();
+      G.mobileFiring = true;
+    });
+    
+    btnFire.addEventListener('mouseup', () => {
+      G.mobileFiring = false;
+    });
+    
+    btnFire.addEventListener('mouseleave', () => {
+      G.mobileFiring = false;
+    });
+  }
 
   function touchStart(e) {
     audioInit();
@@ -127,11 +155,26 @@
     joyKnob.style.left = (touch.ox + touch.dx - 24) + 'px';
     joyKnob.style.top = (touch.oy + touch.dy - 24) + 'px';
   }
+  
+  // Show/hide mobile controls based on device
+  function updateMobileControls() {
+    if (isTouch) {
+      joyEl.classList.remove('hidden');
+      joyKnob.classList.remove('hidden');
+      if (btnFire) btnFire.classList.remove('hidden');
+    } else {
+      joyEl.classList.add('hidden');
+      joyKnob.classList.add('hidden');
+      if (btnFire) btnFire.classList.add('hidden');
+    }
+  }
+  
   if (isTouch) {
     canvas.addEventListener('touchstart', touchStart, { passive: true });
     canvas.addEventListener('touchmove', touchMove, { passive: true });
     canvas.addEventListener('touchend', touchEnd);
     canvas.addEventListener('touchcancel', touchEnd);
+    updateMobileControls();
   }
 
   // ======================= State =======================
@@ -1547,6 +1590,10 @@ const AVAILABLE_VECTORS = [
   }
 
   function playerShoot(p) {
+    // Mobile fire button support
+    const isFiring = G.mobileFiring || true; // Auto-fire always enabled for now
+    if (!isFiring) return;
+    
     const w = p.bombMode ? WEAPONS.bomb : (WEAPONS[p.weapon] || WEAPONS.bow);
     const cd = w.cd * p.rate * (p.buff.haste > 0 ? 0.6 : 1);
     p.shootTimer -= dt;
@@ -3384,6 +3431,7 @@ if (G.levelUpPending) {
     G.pendingLevels = 0;
     G.canRevive = true;
     G.lastInterstitial = 0;
+    G.mobileFiring = false; // Reset mobile fire state
     G.walls = genWalls();
     G.cam.x = G.player.x;
     G.cam.y = G.player.y;
