@@ -2,9 +2,21 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>NEEDLE.IO — арена</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1, minimum-scale=1">
+  <meta name="description" content="Динамичная арена выживания с прокачкой навыков. Убивай врагов, собирай кристаллы, открывай новое оружие!">
+  <meta name="theme-color" content="#7c6eff">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Needle.io">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <title>NEEDLE.IO — Арена выживания</title>
   <link rel="stylesheet" href="style.css">
+  
+  <!-- Yandex Games SDK -->
+  <script src="https://yandex.ru/games/sdk/v2"></script>
 </head>
 <body>
   <canvas id="game"></canvas>
@@ -93,6 +105,9 @@
   <!-- Touch joystick (mobile) -->
   <div id="joy" class="hidden"></div>
   <div id="joy-knob" class="hidden"></div>
+  
+  <!-- Mobile fire button -->
+  <button id="btn-fire" class="hidden">🔥</button>
 
   <!-- Build panel -->
   <button id="btn-build">СБОРКА</button>

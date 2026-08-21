@@ -633,6 +633,31 @@ button:active {
   pointer-events: none;
 }
 
+/* Mobile fire button */
+#btn-fire {
+  position: fixed;
+  right: 60px;
+  bottom: 70px;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 35%, rgba(255, 100, 80, 0.9), rgba(200, 50, 30, 0.95));
+  border: 3px solid rgba(255, 255, 255, 0.4);
+  font-size: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 42;
+  box-shadow: 0 4px 20px rgba(255, 80, 60, 0.6);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#btn-fire:active {
+  transform: scale(0.92);
+  background: radial-gradient(circle at 50% 35%, rgba(255, 80, 60, 0.95), rgba(180, 40, 20, 0.95));
+}
+
 .hidden {
   display: none !important;
 }
