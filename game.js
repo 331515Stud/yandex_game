@@ -2225,7 +2225,12 @@ const AVAILABLE_VECTORS = [
 
     for (const id in SKILL_TREE) {
       const node = SKILL_TREE[id];
-      const from = node.parent === null ? TREE_HUB : SKILL_TREE[node.parent];
+      if (node.parent === null) continue; // Пропускаем корневые узлы
+      const from = SKILL_TREE[node.parent];
+      if (!from) {
+        console.warn(`Skill ${id} has invalid parent: ${node.parent}`);
+        continue; // Пропускаем узлы с несуществующим родителем
+      }
       const line = document.createElementNS(svgNS, 'line');
       line.setAttribute('x1', from.x);
       line.setAttribute('y1', from.y);
