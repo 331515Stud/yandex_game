@@ -2107,123 +2107,171 @@ const AVAILABLE_VECTORS = [
   const TREE_DESC = {};
   for (let i = 0; i < UPGRADES.length; i++) TREE_DESC[UPGRADES[i].id] = UPGRADES[i].desc || '';
 
-  // Graph layout: polar coordinates around the core (0,0).
-  // tier = ring index, angle in degrees (0° = right, 90° = down).
-  const SKILL_TREE = {
-    // Ring 0 — roots (4 nodes, 90° apart)
-    dmg:    { parent: null,      tier: 0, angle: -90 },
-    speed:  { parent: null,      tier: 0, angle: 0 },
-    multi:  { parent: null,      tier: 0, angle: 90 },
-    hp:     { parent: null,      tier: 0, angle: 180 },
-
-    // Ring 1 — evenly spaced per parent sector
-    dmg2:     { parent: 'dmg',     tier: 1, angle: -120 },
-    crit:     { parent: 'dmg',     tier: 1, angle: -60 },
-    rate:     { parent: 'dmg',     tier: 1, angle: -90 },
-    
-    shield:   { parent: 'hp',      tier: 1, angle: 150 },
-    regen:    { parent: 'hp',      tier: 1, angle: 180 },
-    healUp:   { parent: 'hp',      tier: 1, angle: 210 },
-    
-    magnet:   { parent: 'speed',   tier: 1, angle: -30 },
-    aspeed:   { parent: 'speed',   tier: 1, angle: 30 },
-    
-    multi2:   { parent: 'multi',   tier: 1, angle: 60 },
-    backshot: { parent: 'multi',   tier: 1, angle: 90 },
-    sideshot: { parent: 'multi',   tier: 1, angle: 120 },
-    pierce:   { parent: 'multi',   tier: 1, angle: 75 },
-    epoison:  { parent: 'multi',   tier: 1, angle: 105 },
-
-    // Ring 2
-    dmg3:    { parent: 'dmg2',     tier: 2, angle: -140 },
-    crit2:   { parent: 'crit',     tier: 2, angle: -40 },
-    rate2:   { parent: 'rate',     tier: 2, angle: -100 },
-    bounce:  { parent: 'rate',     tier: 2, angle: -80 },
-    through: { parent: 'rate',     tier: 2, angle: -60 },
-    
-    hp2:     { parent: 'shield',   tier: 2, angle: 130 },
-    shield2: { parent: 'shield',   tier: 2, angle: 170 },
-    vamp:    { parent: 'regen',    tier: 2, angle: 160 },
-    regen2:  { parent: 'regen',    tier: 2, angle: 200 },
-    
-    melee:   { parent: 'sideshot', tier: 2, angle: 130 },
-    efire:   { parent: 'epoison',  tier: 2, angle: 90 },
-    enet:    { parent: 'epoison',  tier: 2, angle: 105 },
-    eice:    { parent: 'epoison',  tier: 2, angle: 120 },
-    
-    speed2:  { parent: 'magnet',   tier: 2, angle: -45 },
-    magnet2: { parent: 'magnet',   tier: 2, angle: -15 },
-    aspeed2: { parent: 'aspeed',   tier: 2, angle: 45 },
-    
-    multi3:  { parent: 'multi2',   tier: 2, angle: 50 },
-    backshot2: { parent: 'backshot', tier: 2, angle: 80 },
-    sideshot2: { parent: 'sideshot', tier: 2, angle: 140 },
-    pierce2: { parent: 'pierce',   tier: 2, angle: 65 },
-
-    // Ring 3 — deepest upgrades
-    bomb:    { parent: 'through',  tier: 3, angle: -50 },
-    rate3:   { parent: 'rate2',    tier: 3, angle: -110 },
-    multi4:  { parent: 'multi3',   tier: 3, angle: 40 },
-    efire2:  { parent: 'efire',    tier: 3, angle: 80 },
-    eice2:   { parent: 'eice',     tier: 3, angle: 130 },
-    epoison2:{ parent: 'enet',     tier: 3, angle: 100 },
-    
-    // New weapons
-    w_spiral: { parent: 'multi',   tier: 1, angle: 45 },
-    w_orbit:  { parent: 'multi2',  tier: 2, angle: 30 },
-    w_wave:   { parent: 'multi3',  tier: 3, angle: 20 }
-  };
-  const TREE_RING_R = [600, 1300, 2100, 3000];
-const MIN_ANGLE_SEP = 25; // Минимальный угол между детьми одного родителя (градусы)
-
-  // Resolve polar coords to pixel offsets and size the logical canvas.
+  // Graph layout: радиальная паутина без пересечений
+  // Каждый узел размещается в секторе своего родителя
   const TREE_NODE_R = 34;
+  const TREE_RING_R = [550, 950, 1450, 2050]; // Радиусы колец
+  const MIN_CHILD_ANGLE = 18; // Минимальный угол между детьми одного родителя
+  
   let TREE_W = 0, TREE_H = 0, TREE_HUB = { x: 0, y: 0 };
-  (function layoutTree() {
-    // Группируем детей по родителям
-    const childrenByParent = {};
-    for (const id in SKILL_TREE) {
-      const n = SKILL_TREE[id];
-      if (n.parent !== null) {
-        if (!childrenByParent[n.parent]) childrenByParent[n.parent] = [];
-        childrenByParent[n.parent].push({ id, node: n });
-      }
-    }
+  
+  // Структура дерева: каждый элемент — это список детей для данного узла
+  const TREE_STRUCTURE = {
+    null: ['dmg', 'speed', 'multi', 'hp'], // Корневые узлы
+    dmg: ['rate', 'dmg2', 'crit'],
+    speed: ['magnet', 'aspeed'],
+    multi: ['pierce', 'sideshot', 'backshot', 'multi2', 'w_spiral', 'epoison'],
+    hp: ['shield', 'regen', 'healUp'],
     
-    // Сортируем детей каждого родителя по углу и пересчитываем углы
-    for (const parentId in childrenByParent) {
-      const children = childrenByParent[parentId];
-      if (children.length === 0) continue;
+    rate: ['rate2', 'bounce', 'through'],
+    dmg2: ['dmg3'],
+    crit: ['crit2'],
+    
+    magnet: ['speed2', 'magnet2'],
+    aspeed: ['aspeed2'],
+    
+    pierce: ['pierce2'],
+    sideshot: ['melee', 'sideshot2'],
+    backshot: ['backshot2'],
+    multi2: ['multi3', 'w_orbit'],
+    w_spiral: [],
+    epoison: ['efire', 'eice', 'enet'],
+    
+    shield: ['hp2', 'shield2'],
+    regen: ['vamp', 'regen2'],
+    healUp: [],
+    
+    rate2: ['rate3'],
+    bounce: [],
+    through: ['bomb'],
+    
+    speed2: [],
+    magnet2: [],
+    aspeed2: [],
+    
+    pierce2: [],
+    melee: [],
+    sideshot2: [],
+    backshot2: [],
+    multi3: ['multi4'],
+    w_orbit: [],
+    
+    hp2: [],
+    shield2: [],
+    vamp: [],
+    regen2: [],
+    
+    rate3: [],
+    bomb: [],
+    
+    multi4: [],
+    efire: ['efire2'],
+    eice: ['eice2'],
+    enet: ['epoison2'],
+    
+    w_wave: [],
+    efire2: [],
+    eice2: [],
+    epoison2: []
+  };
+
+  const SKILL_TREE = {};
+  
+  (function buildTree() {
+    // Шаг 1: Размещаем корневые узлы равномерно по кругу (4 узла = 90° друг от друга)
+    const rootIds = TREE_STRUCTURE.null;
+    const rootAngleStep = 360 / rootIds.length;
+    const rootStartAngle = -90; // Начинаем сверху
+    
+    rootIds.forEach((id, idx) => {
+      const angle = rootStartAngle + idx * rootAngleStep;
+      SKILL_TREE[id] = {
+        parent: null,
+        tier: 0,
+        angle: angle,
+        sectorStart: angle - rootAngleStep / 2,
+        sectorEnd: angle + rootAngleStep / 2
+      };
+    });
+    
+    // Шаг 2: Рекурсивно размещаем детей в секторах родителей
+    function placeChildren(parentId, tier) {
+      const children = TREE_STRUCTURE[parentId] || [];
+      if (children.length === 0) return;
       
-      // Сортируем по исходному углу
-      children.sort((a, b) => a.node.angle - b.node.angle);
+      const parent = SKILL_TREE[parentId];
+      const sectorWidth = parent.sectorEnd - parent.sectorStart;
+      const availableWidth = sectorWidth - MIN_CHILD_ANGLE; // Оставляем запас по краям
       
-      // Пересчитываем углы с равномерным распределением
-      const totalSpan = Math.max(children.length * MIN_ANGLE_SEP, 60);
-      const startAngle = children[0].node.angle - totalSpan / 2;
-      const step = totalSpan / Math.max(children.length - 1, 1);
+      // Если детей много, расширяем сектор немного
+      const minNeeded = children.length * MIN_CHILD_ANGLE;
+      const actualWidth = Math.max(availableWidth, minNeeded);
+      const startAngle = parent.angle - actualWidth / 2;
+      const step = actualWidth / Math.max(children.length - 1, 1);
       
-      children.forEach((child, idx) => {
-        child.node.angle = startAngle + step * idx;
+      children.forEach((childId, idx) => {
+        const childAngle = children.length === 1 ? parent.angle : (startAngle + step * idx);
+        const childSectorWidth = actualWidth / children.length;
+        
+        SKILL_TREE[childId] = {
+          parent: parentId,
+          tier: tier,
+          angle: childAngle,
+          sectorStart: childAngle - childSectorWidth / 2,
+          sectorEnd: childAngle + childSectorWidth / 2
+        };
+        
+        // Рекурсивно размещаем детей этого узла
+        placeChildren(childId, tier + 1);
       });
     }
     
+    // Запускаем размещение для всех корневых узлов
+    rootIds.forEach(id => placeChildren(id, 1));
+  })();
+  
+  // Добавляем w_wave как ребенка multi3 постфактум
+  if (SKILL_TREE.multi3) {
+    const multi3Node = SKILL_TREE.multi3;
+    const sectorWidth = 25;
+    const wWaveAngle = multi3Node.sectorStart + sectorWidth / 2;
+    SKILL_TREE.w_wave = {
+      parent: 'multi3',
+      tier: 3,
+      angle: wWaveAngle,
+      sectorStart: multi3Node.sectorStart,
+      sectorEnd: multi3Node.sectorStart + sectorWidth
+    };
+  }
+
+  // Вычисляем координаты и размеры
+  (function computeCoords() {
     const pad = TREE_NODE_R + 52;
-    let minX = 0, maxX = 0, minY = 0, maxY = 0;
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    
     for (const id in SKILL_TREE) {
       const n = SKILL_TREE[id];
       const a = n.angle * Math.PI / 180;
-      n.x = Math.round(Math.cos(a) * TREE_RING_R[n.tier]);
-      n.y = Math.round(Math.sin(a) * TREE_RING_R[n.tier]);
-      minX = Math.min(minX, n.x); maxX = Math.max(maxX, n.x);
-      minY = Math.min(minY, n.y); maxY = Math.max(maxY, n.y);
+      const r = TREE_RING_R[n.tier] || (n.tier * 500);
+      n.x = Math.round(Math.cos(a) * r);
+      n.y = Math.round(Math.sin(a) * r);
+      
+      minX = Math.min(minX, n.x);
+      maxX = Math.max(maxX, n.x);
+      minY = Math.min(minY, n.y);
+      maxY = Math.max(maxY, n.y);
     }
-    const ox = pad - minX, oy = pad - minY;
+    
+    const ox = pad - minX;
+    const oy = pad - minY;
+    
     for (const id in SKILL_TREE) {
       SKILL_TREE[id].x += ox;
       SKILL_TREE[id].y += oy;
     }
-    TREE_HUB.x = ox; TREE_HUB.y = oy;
+    
+    TREE_HUB.x = ox;
+    TREE_HUB.y = oy;
     TREE_W = (maxX - minX) + pad * 2;
     TREE_H = (maxY - minY) + pad * 2;
   })();
