@@ -2173,7 +2173,7 @@ const AVAILABLE_VECTORS = [
     w_orbit:  { parent: 'multi2',  tier: 2, angle: 30 },
     w_wave:   { parent: 'multi3',  tier: 3, angle: 20 }
   };
-  const TREE_RING_R = [0, 220, 420, 620];
+  const TREE_RING_R = [0, 440, 840, 1240];
 
   // Resolve polar coords to pixel offsets and size the logical canvas.
   const TREE_NODE_R = 34;
