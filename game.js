@@ -219,7 +219,7 @@
   };
 
   // ======================= Upgrades =======================
-  const ARROW_WEAPON_IDS = ['bow', 'shotgun', 'rapid', 'sniper', 'twin', 'fan', 'spiral', 'wave'];
+  const ARROW_WEAPON_IDS = ['bow', 'shotgun', 'rapid', 'sniper', 'twin', 'fan', 'spiral', 'orbit', 'wave'];
   function isArrowWeapon(p) {
     return !!p && ARROW_WEAPON_IDS.indexOf(p.weapon) !== -1 && !p.bombMode;
   }
