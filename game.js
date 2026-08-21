@@ -731,14 +731,8 @@ const BUILD_VECTORS = {
   }
 };
 
-// Available vectors per category (for filtering)
-const VECTOR_CATEGORIES = {
-  damage: ['dmg', 'crit', 'rate'],
-  weapons: ['multi', 'backshot', 'sideshot', 'aspeed', 'pierce', 'bounce', 'through'],
-  elements: ['efire', 'eice', 'epoison', 'enet'],
-  utility: ['hp', 'speed', 'shield', 'magnet', 'regen', 'vamp', 'healUp', 'melee'],
-  bombs: ['bomb']
-};
+  // Available vectors per category (for filtering)
+  // VECTOR_CATEGORIES removed - unused
 
 // All available vectors
 const AVAILABLE_VECTORS = [
@@ -838,7 +832,8 @@ const AVAILABLE_VECTORS = [
       shootTimer: 0,
       iframes: 0,
       flash: 0,
-      aim: 0
+      aim: 0,
+      orbitProjectiles: []
     };
   }
 
@@ -1519,20 +1514,24 @@ const AVAILABLE_VECTORS = [
     const rotations = 3;
     for (let i = 0; i < rotations; i++) {
       const a = aim + (i / rotations) * TAU;
-      G.projectiles.push(createProjectile(p.x, p.y, a, dmg, spd, pierce, bounces, passWalls, elem));
+      fireArrow(p.x, p.y, a, spd, dmg, 'player', p, pierce, false, bounces, passWalls, elem);
     }
     SFX.shoot();
   }
 
   function fireOrbit(p, dmg, pierce, bounces, passWalls, elem) {
     const count = 4;
+    // Store orbit data on player for update loop to handle
+    p.orbitProjectiles = [];
     for (let i = 0; i < count; i++) {
-      const a = (i / count) * TAU + Math.atan2(G.player.y - p.y, G.player.x - p.x);
-      const proj = createProjectile(p.x, p.y, a, dmg, 180, pierce, bounces, passWalls, elem);
-      proj.orbit = true;
-      proj.orbitCenter = { x: p.x, y: p.y };
-      proj.orbitSpeed = 2.5;
-      G.projectiles.push(proj);
+      const baseAngle = (i / count) * TAU;
+      // Create stationary arrow that will be moved by orbit logic
+      fireArrow(p.x, p.y, baseAngle, 0, dmg, 'player', p, pierce, false, bounces, passWalls, elem);
+      p.orbitProjectiles.push({
+        angle: baseAngle,
+        radius: 50,
+        speed: 2.5
+      });
     }
     SFX.shoot();
   }
@@ -1542,7 +1541,7 @@ const AVAILABLE_VECTORS = [
     for (let i = 0; i < waveCount; i++) {
       const offset = (i - (waveCount - 1) / 2) * 0.15;
       const a = aim + offset;
-      G.projectiles.push(createProjectile(p.x, p.y, a, dmg, spd, pierce, bounces, passWalls, elem));
+      fireArrow(p.x, p.y, a, spd, dmg, 'player', p, pierce, false, bounces, passWalls, elem);
     }
     SFX.shoot();
   }
@@ -2110,7 +2109,12 @@ const AVAILABLE_VECTORS = [
     multi4:  { parent: 'multi3',   tier: 3, angle: 60 },
     efire2:  { parent: 'efire',    tier: 3, angle: 115 },
     eice2:   { parent: 'eice',     tier: 3, angle: 145 },
-    epoison2:{ parent: 'enet',     tier: 3, angle: 130 }
+    epoison2:{ parent: 'enet',     tier: 3, angle: 130 },
+    
+    // New weapons
+    w_spiral: { parent: 'multi',   tier: 1, angle: 150 },
+    w_orbit:  { parent: 'multi2',  tier: 2, angle: 85 },
+    w_wave:   { parent: 'multi3',  tier: 3, angle: 45 }
   };
   const TREE_RING_R = [170, 320, 470, 620];
 
@@ -2684,11 +2688,28 @@ const AVAILABLE_VECTORS = [
     // Arrows
     for (let i = G.arrows.length - 1; i >= 0; i--) {
       const ar = G.arrows[i];
-      ar.px0 = ar.x;
-      ar.py0 = ar.y;
-      ar.x += ar.vx * dt;
-      ar.y += ar.vy * dt;
-      ar.life -= dt;
+      
+      // Handle orbit projectiles for player
+      if (ar.ownerType === 'player' && p.orbitProjectiles && p.orbitProjectiles.length > 0) {
+        // This arrow is part of orbit weapon - update its position based on orbit data
+        const orbitIdx = i % p.orbitProjectiles.length;
+        if (p.orbitProjectiles[orbitIdx]) {
+          const orbit = p.orbitProjectiles[orbitIdx];
+          orbit.angle += orbit.speed * dt;
+          ar.x = p.x + Math.cos(orbit.angle) * orbit.radius;
+          ar.y = p.y + Math.sin(orbit.angle) * orbit.radius;
+          ar.life -= dt;
+          ar.px0 = ar.x - ar.vx * dt;
+          ar.py0 = ar.y - ar.vy * dt;
+        }
+      } else {
+        ar.px0 = ar.x;
+        ar.py0 = ar.y;
+        ar.x += ar.vx * dt;
+        ar.y += ar.vy * dt;
+        ar.life -= dt;
+      }
+      
       if (ar.life <= 0 || ar.x < -20 || ar.x > ARENA.w + 20 || ar.y < -20 || ar.y > ARENA.h + 20) {
         G.arrows.splice(i, 1);
         continue;
