@@ -2063,9 +2063,8 @@ const AVAILABLE_VECTORS = [
   // Graph layout: polar coordinates around the core (0,0).
   // tier = ring index, angle in degrees (0° = right, 90° = down).
   const SKILL_TREE = {
-    // Ring 0 — roots (always reachable)
+    // Ring 0 — roots (4 nodes, 90° apart)
     dmg:    { parent: null,      tier: 0, angle: -90 },
-    hp:     { parent: null,      tier: 0, angle: 180 },
     speed:  { parent: null,      tier: 0, angle: 0 },
     multi:  { parent: null,      tier: 0, angle: 90 },
 
@@ -2119,7 +2118,7 @@ const AVAILABLE_VECTORS = [
     w_orbit:  { parent: 'multi2',  tier: 2, angle: 70 },
     w_wave:   { parent: 'multi3',  tier: 3, angle: 30 }
   };
-  const TREE_RING_R = [170, 320, 470, 620];
+  const TREE_RING_R = [200, 380, 560, 740];
 
   // Resolve polar coords to pixel offsets and size the logical canvas.
   const TREE_NODE_R = 34;
