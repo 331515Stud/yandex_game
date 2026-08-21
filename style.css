@@ -661,3 +661,38 @@ button:active {
 .hidden {
   display: none !important;
 }
+
+/* Вкладки дерева навыков */
+#tree-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 10px 16px;
+}
+
+.tree-tab {
+  flex: 1;
+  padding: 8px 12px;
+  border: 2px solid var(--tab-color, #666);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.4);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+}
+
+.tree-tab:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.tree-tab.active {
+  background: var(--tab-color, #666);
+  border-color: var(--tab-color, #666);
+  color: #000;
+}
+
+#tree-title {
+  transition: color 0.2s;
+}
