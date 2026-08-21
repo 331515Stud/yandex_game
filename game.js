@@ -1577,18 +1577,21 @@ const AVAILABLE_VECTORS = [
     if (w.kind === 'boomerang') { fireBoomerang(p, p.aim); p.shootTimer = cd; return; }
     if (w.kind === 'claws') { fireClaws(p); p.shootTimer = cd; return; }
     if (w.kind === 'necro') { spawnNecro(p); p.shootTimer = cd; return; }
+
+    // Calculate common projectile parameters for all weapons
+    const dmg = p.dmg * w.dmg * activeDmgMult(p);
+    const spd = w.speed * p.arrowSpeed;
+    const pierce = w.pierce + p.pierce;
+    const bounces = p.ricochet;
+    const passWalls = p.pierceWalls;
+    const elem = p.element || null;
+
     if (w.kind === 'spiral') { fireSpiral(p, p.aim, dmg, spd, pierce, bounces, passWalls, elem); p.shootTimer = cd; return; }
     if (w.kind === 'orbit') { fireOrbit(p, dmg, pierce, bounces, passWalls, elem); p.shootTimer = cd; return; }
     if (w.kind === 'wave') { fireWave(p, p.aim, dmg, spd, pierce, bounces, passWalls, elem); p.shootTimer = cd; return; }
 
     const aim = p.aim;
     const n = w.burst + p.frontAdd + (p.buff.multi > 0 ? 2 : 0);
-    const dmg = p.dmg * w.dmg * activeDmgMult(p);
-    const spd = w.speed * p.arrowSpeed;
-    const pierce = w.pierce + p.pierce;
-    const bounces = p.ricochet;
-    const passWalls = p.pierceWalls;
-    const elem = p.element;
 
     const shots = [];
     const addShot = (ang, xoff, yoff) => shots.push({ ang, xoff, yoff });
@@ -2067,54 +2070,54 @@ const AVAILABLE_VECTORS = [
     multi:  { parent: null,      tier: 0, angle: 90 },
 
     // Ring 1
-    dmg2:     { parent: 'dmg',     tier: 1, angle: -110 },
-    crit:     { parent: 'dmg',     tier: 1, angle: -135 },
-    rate:     { parent: 'dmg',     tier: 1, angle: -65 },
-    shield:   { parent: 'hp',      tier: 1, angle: 207 },
-    regen:    { parent: 'hp',      tier: 1, angle: 170 },
-    healUp:   { parent: 'hp',      tier: 1, angle: 153 },
-    magnet:   { parent: 'speed',   tier: 1, angle: -25 },
-    aspeed:   { parent: 'speed',   tier: 1, angle: 25 },
-    multi2:   { parent: 'multi',   tier: 1, angle: 70 },
-    backshot: { parent: 'multi',   tier: 1, angle: 50 },
-    sideshot: { parent: 'multi',   tier: 1, angle: 90 },
-    pierce:   { parent: 'multi',   tier: 1, angle: 110 },
-    epoison:  { parent: 'multi',   tier: 1, angle: 130 },
+    dmg2:     { parent: 'dmg',     tier: 1, angle: -100 },
+    crit:     { parent: 'dmg',     tier: 1, angle: -140 },
+    rate:     { parent: 'dmg',     tier: 1, angle: -50 },
+    shield:   { parent: 'hp',      tier: 1, angle: 200 },
+    regen:    { parent: 'hp',      tier: 1, angle: 165 },
+    healUp:   { parent: 'hp',      tier: 1, angle: 130 },
+    magnet:   { parent: 'speed',   tier: 1, angle: -20 },
+    aspeed:   { parent: 'speed',   tier: 1, angle: 20 },
+    multi2:   { parent: 'multi',   tier: 1, angle: 55 },
+    backshot: { parent: 'multi',   tier: 1, angle: 35 },
+    sideshot: { parent: 'multi',   tier: 1, angle: 75 },
+    pierce:   { parent: 'multi',   tier: 1, angle: 95 },
+    epoison:  { parent: 'multi',   tier: 1, angle: 115 },
 
     // Ring 2
-    dmg3:    { parent: 'dmg2',     tier: 2, angle: -100 },
-    crit2:   { parent: 'crit',     tier: 2, angle: -145 },
-    rate2:   { parent: 'rate',     tier: 2, angle: -55 },
-    bounce:  { parent: 'rate',     tier: 2, angle: -75 },
-    through: { parent: 'rate',     tier: 2, angle: -35 },
-    hp2:     { parent: 'shield',   tier: 2, angle: 217 },
-    shield2: { parent: 'shield',   tier: 2, angle: 197 },
-    vamp:    { parent: 'regen',    tier: 2, angle: 170 },
-    regen2:  { parent: 'regen',    tier: 2, angle: 150 },
-    melee:   { parent: 'sideshot', tier: 2, angle: 80 },
-    efire:   { parent: 'epoison',  tier: 2, angle: 120 },
-    enet:    { parent: 'epoison',  tier: 2, angle: 135 },
-    eice:    { parent: 'epoison',  tier: 2, angle: 150 },
-    speed2:  { parent: 'magnet',   tier: 2, angle: -15 },
-    magnet2: { parent: 'magnet',   tier: 2, angle: -35 },
-    aspeed2: { parent: 'aspeed',   tier: 2, angle: 35 },
-    multi3:  { parent: 'multi2',   tier: 2, angle: 65 },
-    backshot2: { parent: 'backshot', tier: 2, angle: 40 },
-    sideshot2: { parent: 'sideshot', tier: 2, angle: 100 },
-    pierce2: { parent: 'pierce',   tier: 2, angle: 120 },
+    dmg3:    { parent: 'dmg2',     tier: 2, angle: -95 },
+    crit2:   { parent: 'crit',     tier: 2, angle: -150 },
+    rate2:   { parent: 'rate',     tier: 2, angle: -45 },
+    bounce:  { parent: 'rate',     tier: 2, angle: -70 },
+    through: { parent: 'rate',     tier: 2, angle: -25 },
+    hp2:     { parent: 'shield',   tier: 2, angle: 210 },
+    shield2: { parent: 'shield',   tier: 2, angle: 185 },
+    vamp:    { parent: 'regen',    tier: 2, angle: 155 },
+    regen2:  { parent: 'regen',    tier: 2, angle: 135 },
+    melee:   { parent: 'sideshot', tier: 2, angle: 95 },
+    efire:   { parent: 'epoison',  tier: 2, angle: 110 },
+    enet:    { parent: 'epoison',  tier: 2, angle: 125 },
+    eice:    { parent: 'epoison',  tier: 2, angle: 140 },
+    speed2:  { parent: 'magnet',   tier: 2, angle: -10 },
+    magnet2: { parent: 'magnet',   tier: 2, angle: -30 },
+    aspeed2: { parent: 'aspeed',   tier: 2, angle: 40 },
+    multi3:  { parent: 'multi2',   tier: 2, angle: 50 },
+    backshot2: { parent: 'backshot', tier: 2, angle: 25 },
+    sideshot2: { parent: 'sideshot', tier: 2, angle: 85 },
+    pierce2: { parent: 'pierce',   tier: 2, angle: 105 },
 
     // Ring 3 — deepest upgrades
-    bomb:    { parent: 'through',  tier: 3, angle: -25 },
-    rate3:   { parent: 'rate2',    tier: 3, angle: -45 },
-    multi4:  { parent: 'multi3',   tier: 3, angle: 60 },
-    efire2:  { parent: 'efire',    tier: 3, angle: 115 },
-    eice2:   { parent: 'eice',     tier: 3, angle: 145 },
-    epoison2:{ parent: 'enet',     tier: 3, angle: 130 },
+    bomb:    { parent: 'through',  tier: 3, angle: -20 },
+    rate3:   { parent: 'rate2',    tier: 3, angle: -40 },
+    multi4:  { parent: 'multi3',   tier: 3, angle: 45 },
+    efire2:  { parent: 'efire',    tier: 3, angle: 105 },
+    eice2:   { parent: 'eice',     tier: 3, angle: 140 },
+    epoison2:{ parent: 'enet',     tier: 3, angle: 120 },
     
     // New weapons
-    w_spiral: { parent: 'multi',   tier: 1, angle: 150 },
-    w_orbit:  { parent: 'multi2',  tier: 2, angle: 85 },
-    w_wave:   { parent: 'multi3',  tier: 3, angle: 45 }
+    w_spiral: { parent: 'multi',   tier: 1, angle: 135 },
+    w_orbit:  { parent: 'multi2',  tier: 2, angle: 70 },
+    w_wave:   { parent: 'multi3',  tier: 3, angle: 30 }
   };
   const TREE_RING_R = [170, 320, 470, 620];
 
