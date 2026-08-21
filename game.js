@@ -207,53 +207,83 @@
     rapid:   { name: 'Пулемёт',  icon: 'rapid',    color: '#38e08c', cd: 0.16, dmg: 0.55, speed: 520, burst: 1, spread: 0.05, pierce: 0 },
     sniper:  { name: 'Снайпер',  icon: 'sniper',   color: '#b18cff', cd: 1.10, dmg: 2.40, speed: 920, burst: 1, spread: 0.00, pierce: 2 },
     twin:    { name: 'Близнецы', icon: 'twin',     color: '#6ee7ff', cd: 0.50, dmg: 0.95, speed: 580, burst: 2, spread: 0.10, pierce: 0 },
-    fan:     { name: 'Веер',      icon: 'multi',    color: '#7ce7a2', cd: 0.70, dmg: 0.45, speed: 500, burst: 8, spread: 0.32, pierce: 0 },
+    fan:     { name: 'Веер',     icon: 'multi',    color: '#7ce7a2', cd: 0.70, dmg: 0.45, speed: 500, burst: 8, spread: 0.32, pierce: 0 },
     laser:   { name: 'Лазер',    icon: 'laser',    color: '#ff3b6b', cd: 1.00, dmg: 9,    speed: 0,   burst: 1, spread: 0.00, pierce: 0, kind: 'laser', range: 600 },
     boomerang: { name: 'Бумеранг', icon: 'bounce', color: '#ffae42', cd: 0.90, dmg: 1.40, speed: 0, burst: 1, spread: 0.00, pierce: 0, kind: 'boomerang' },
     claws:   { name: 'Когти',    icon: 'slash',    color: '#38e08c', cd: 0.35, dmg: 2.00, speed: 0,   burst: 1, spread: 0.00, pierce: 0, kind: 'claws' },
-    necro:   { name: 'Некромант', icon: 'slash', color: '#9bd7ff', cd: 2.2, dmg: 0, speed: 0, burst: 1, spread: 0.00, pierce: 0, kind: 'necro' },
-    bomb:    { name: 'Бомбомёт', icon: 'droplet', color: '#ffae42', cd: 1.6, dmg: 0, speed: 420, burst: 1, spread: 0.00, pierce: 0 }
+    necro:   { name: 'Некромант', icon: 'slash',   color: '#9bd7ff', cd: 2.2, dmg: 0, speed: 0, burst: 1, spread: 0.00, pierce: 0, kind: 'necro' },
+    bomb:    { name: 'Бомбомёт', icon: 'droplet',  color: '#ffae42', cd: 1.6, dmg: 0, speed: 420, burst: 1, spread: 0.00, pierce: 0 },
+    spiral:  { name: 'Спираль',  icon: 'bolt',     color: '#ff6b9d', cd: 0.55, dmg: 0.85, speed: 480, burst: 1, spread: 0.00, pierce: 0, kind: 'spiral' },
+    orbit:   { name: 'Орбита',   icon: 'shield',   color: '#a58cff', cd: 0.80, dmg: 1.10, speed: 0,   burst: 1, spread: 0.00, pierce: 0, kind: 'orbit' },
+    wave:    { name: 'Волна',    icon: 'pulse',    color: '#57c8ff', cd: 1.20, dmg: 3.50, speed: 400, burst: 1, spread: 0.00, pierce: 1, kind: 'wave' }
   };
 
   // ======================= Upgrades =======================
-  const ARROW_WEAPON_IDS = ['bow', 'shotgun', 'rapid', 'sniper', 'twin', 'fan'];
+  const ARROW_WEAPON_IDS = ['bow', 'shotgun', 'rapid', 'sniper', 'twin', 'fan', 'spiral', 'wave'];
   function isArrowWeapon(p) {
     return !!p && ARROW_WEAPON_IDS.indexOf(p.weapon) !== -1 && !p.bombMode;
   }
   const UPGRADES = [
     { id: 'dmg',   icon: 'sword',   color: '#ff7a3d', name: 'Урон',      desc: '+25% к урону стрел',        cond: p => !p.bombMode, fn: p => { p.dmg *= 1.25; } },
+    { id: 'dmg2',  icon: 'sword',   color: '#ff5c2a', name: 'Урон II',   desc: '+30% к урону стрел',        cond: p => !p.bombMode && (p.build?.dmg || 0) >= 1, fn: p => { p.dmg *= 1.3; } },
+    { id: 'dmg3',  icon: 'sword',   color: '#ff3d1a', name: 'Урон III',  desc: '+35% к урону стрел',        cond: p => !p.bombMode && (p.build?.dmg2 || 0) >= 1, fn: p => { p.dmg *= 1.35; } },
     { id: 'rate',  icon: 'bolt',    color: '#ffd23e', name: 'Огонь',      desc: '+20% скорострельности',     cond: () => true, fn: p => { p.rate *= 0.833; } },
+    { id: 'rate2', icon: 'bolt',    color: '#ffb700', name: 'Огонь II',   desc: '+25% скорострельности',     cond: p => (p.build?.rate || 0) >= 1, fn: p => { p.rate *= 0.8; } },
+    { id: 'rate3', icon: 'bolt',    color: '#ff9500', name: 'Огонь III',  desc: '+30% скорострельности',     cond: p => (p.build?.rate2 || 0) >= 1, fn: p => { p.rate *= 0.77; } },
     { id: 'speed', icon: 'speed',   color: '#6ee7ff', name: 'Скорость',   desc: '+10% к скорости бега',      cond: () => true, fn: p => { p.speed *= 1.1; } },
+    { id: 'speed2',icon: 'speed',   color: '#4dd4ff', name: 'Скорость II',desc: '+12% к скорости бега',      cond: p => (p.build?.speed || 0) >= 1, fn: p => { p.speed *= 1.12; } },
     { id: 'hp',    icon: 'heart',   color: '#ff4d6d', name: 'Прочность',  desc: '+25 макс. HP и лечение',    cond: () => true, fn: p => { p.maxHp += 25; p.hp += 25; } },
-    { id: 'multi', icon: 'multi',   color: '#38e08c', name: 'Мультивыстрел', desc: '+1 снаряд спереди и +1 миньон (кап 8)', cond: () => true, fn: p => { p.frontAdd = Math.min(8, p.frontAdd + 1); } },
+    { id: 'hp2',   icon: 'heart',   color: '#ff2a55', name: 'Прочность II', desc: '+30 макс. HP и лечение',  cond: p => (p.build?.hp || 0) >= 1, fn: p => { p.maxHp += 30; p.hp += 30; } },
+    { id: 'multi', icon: 'multi',   color: '#38e08c', name: 'Мультивыстрел x2', desc: '+1 снаряд спереди', cond: () => true, fn: p => { p.frontAdd = Math.min(10, p.frontAdd + 1); } },
+    { id: 'multi2',icon: 'multi',   color: '#2ecc71', name: 'Мультивыстрел x3', desc: '+1 снаряд спереди', cond: p => (p.build?.multi || 0) >= 1, fn: p => { p.frontAdd = Math.min(10, p.frontAdd + 1); } },
+    { id: 'multi3',icon: 'multi',   color: '#27ae60', name: 'Мультивыстрел x4', desc: '+1 снаряд спереди', cond: p => (p.build?.multi2 || 0) >= 1, fn: p => { p.frontAdd = Math.min(10, p.frontAdd + 1); } },
+    { id: 'multi4',icon: 'multi',   color: '#1e8449', name: 'Мультивыстрел x5', desc: '+2 снаряда спереди', cond: p => (p.build?.multi3 || 0) >= 1, fn: p => { p.frontAdd = Math.min(10, p.frontAdd + 2); } },
     { id: 'aspeed',icon: 'arrow',   color: '#b18cff', name: 'Полёт',      desc: '+25% скорости снарядов',       cond: p => isArrowWeapon(p), fn: p => { p.arrowSpeed *= 1.25; } },
+    { id: 'aspeed2',icon: 'arrow',  color: '#9b59b6', name: 'Полёт II',   desc: '+30% скорости снарядов',       cond: p => isArrowWeapon(p) && (p.build?.aspeed || 0) >= 1, fn: p => { p.arrowSpeed *= 1.3; } },
     { id: 'magnet',icon: 'magnet',  color: '#7ce7a2', name: 'Магнит',     desc: '+40% к притяжению',         cond: () => true, fn: p => { p.magnet *= 1.4; } },
+    { id: 'magnet2',icon: 'magnet', color: '#58d68d', name: 'Магнит II',  desc: '+50% к притяжению',         cond: p => (p.build?.magnet || 0) >= 1, fn: p => { p.magnet *= 1.5; } },
     { id: 'pierce',icon: 'pierce',  color: '#ff9e6e', name: 'Пробой',     desc: '+1 к пробиванию',           cond: p => isArrowWeapon(p), fn: p => { p.pierce += 1; } },
+    { id: 'pierce2',icon: 'pierce', color: '#ff8547', name: 'Пробой II',  desc: '+2 к пробиванию',           cond: p => isArrowWeapon(p) && (p.build?.pierce || 0) >= 1, fn: p => { p.pierce += 2; } },
     { id: 'crit',  icon: 'star',    color: '#ffd23e', name: 'Крит',       desc: '+10% шанс крита (x2)',      cond: p => !p.bombMode, fn: p => { p.critChance += 0.1; } },
-    { id: 'regen', icon: 'pulse',   color: '#a5ffd6', name: 'Реген',      desc: '+1.5 HP в секунду (складывается)', cond: () => true, fn: p => { p.regen += 1.5; } },
-    { id: 'healUp', icon: 'heart', color: '#a5ffd6', name: 'Лечение', desc: '+25% ко всему исцелению (реген/вампиризм/аптечки)', cond: p => (p.healingMult || 1) < 3, fn: p => { p.healingMult = (p.healingMult || 1) * 1.25; } },
+    { id: 'crit2', icon: 'star',    color: '#ffc400', name: 'Крит II',    desc: '+12% шанс крита (x2.5)',    cond: p => !p.bombMode && (p.build?.crit || 0) >= 1, fn: p => { p.critChance += 0.12; p.critMult = (p.critMult || 2) + 0.5; } },
+    { id: 'regen', icon: 'pulse',   color: '#a5ffd6', name: 'Реген',      desc: '+1.5 HP в секунду',         cond: () => true, fn: p => { p.regen += 1.5; } },
+    { id: 'regen2',icon: 'pulse',   color: '#7fffd4', name: 'Реген II',   desc: '+2 HP в секунду',           cond: p => (p.build?.regen || 0) >= 1, fn: p => { p.regen += 2; } },
+    { id: 'healUp', icon: 'heart', color: '#a5ffd6', name: 'Лечение', desc: '+25% ко всему исцелению', cond: p => (p.healingMult || 1) < 4, fn: p => { p.healingMult = (p.healingMult || 1) * 1.25; } },
     { id: 'vamp',  icon: 'droplet', color: '#ff5a8f', name: 'Вампиризм',  desc: '+10% вампиризма от урона',  cond: () => true, fn: p => { p.vampirism += 0.1; } },
+    { id: 'vamp2', icon: 'droplet', color: '#ff3372', name: 'Вампиризм II', desc: '+12% вампиризма от урона', cond: p => (p.build?.vamp || 0) >= 1, fn: p => { p.vampirism += 0.12; } },
     { id: 'bounce',icon: 'bounce',  color: '#8ecbff', name: 'Рикошет',    desc: '+1 отскок снарядов от стен', cond: p => isArrowWeapon(p), fn: p => { p.ricochet += 1; } },
+    { id: 'bounce2',icon: 'bounce', color: '#6bb5ff', name: 'Рикошет II', desc: '+2 отскока снарядов от стен', cond: p => isArrowWeapon(p) && (p.build?.bounce || 0) >= 1, fn: p => { p.ricochet += 2; } },
     { id: 'through', icon: 'pierce', color: '#c9b1ff', name: 'Пронзание', desc: 'Снаряды проходят сквозь стены', cond: p => isArrowWeapon(p) && !p.pierceWalls, fn: p => { p.pierceWalls = true; } },
     { id: 'bomb', icon: 'droplet', color: '#ffae42', name: 'Бомба', desc: '+15% радиус взрыва', cond: p => p.weapon === 'bomb', fn: p => { p.bombRadiusMult = (p.bombRadiusMult || 1) * 1.15; } },
-    { id: 'efire', icon: 'fire', color: '#ff7a3d', name: 'Стихия: Огонь', desc: 'Урон несёт огонь (заменяет текущую)', cond: p => p.element !== 'fire', fn: p => { p.element = 'fire'; } },
-    { id: 'eice', icon: 'ice', color: '#57c8ff', name: 'Стихия: Лёд', desc: 'Урон несёт холод (заменяет текущую)', cond: p => p.element !== 'ice', fn: p => { p.element = 'ice'; } },
-    { id: 'epoison', icon: 'poison', color: '#8bd450', name: 'Стихия: Яд', desc: 'Урон несёт яд и лужи (заменяет текущую)', cond: p => p.element !== 'poison', fn: p => { p.element = 'poison'; } },
-    { id: 'enet', icon: 'web', color: '#c9b1ff', name: 'Стихия: Паутина', desc: 'Урон опутывает сетью (заменяет текущую)', cond: p => p.element !== 'web', fn: p => { p.element = 'web'; } },
-    { id: 'backshot', icon: 'backshot', color: '#8ecbff', name: 'Выстрел назад', desc: '+1 снаряд за спину и +1 миньон (кап 5)', cond: p => p.backShots < 5, fn: p => { p.backShots++; } },
-    { id: 'sideshot', icon: 'sideshot', color: '#6ee7ff', name: 'Выстрелы по бокам', desc: '+1 с каждой стороны и +1 миньон (кап 4)', cond: p => p.sideShots < 4, fn: p => { p.sideShots++; } },
+    { id: 'bomb2', icon: 'droplet', color: '#ff9500', name: 'Бомба II', desc: '+20% радиус взрыва', cond: p => p.weapon === 'bomb' && (p.build?.bomb || 0) >= 1, fn: p => { p.bombRadiusMult = (p.bombRadiusMult || 1) * 1.2; } },
+    { id: 'efire', icon: 'fire', color: '#ff7a3d', name: 'Стихия: Огонь', desc: 'Урон несёт огонь', cond: p => p.element !== 'fire', fn: p => { p.element = 'fire'; } },
+    { id: 'efire2', icon: 'fire', color: '#ff5c2a', name: 'Стихия: Огонь II', desc: '+30% к огненному урону', cond: p => p.element === 'fire' && (p.build?.efire || 0) >= 1, fn: p => { p.fireDmgMult = (p.fireDmgMult || 1) * 1.3; } },
+    { id: 'eice', icon: 'ice', color: '#57c8ff', name: 'Стихия: Лёд', desc: 'Урон несёт холод', cond: p => p.element !== 'ice', fn: p => { p.element = 'ice'; } },
+    { id: 'eice2', icon: 'ice', color: '#3db5e8', name: 'Стихия: Лёд II', desc: '+40% длительность заморозки', cond: p => p.element === 'ice' && (p.build?.eice || 0) >= 1, fn: p => { p.iceDurationMult = (p.iceDurationMult || 1) * 1.4; } },
+    { id: 'epoison', icon: 'poison', color: '#8bd450', name: 'Стихия: Яд', desc: 'Урон несёт яд', cond: p => p.element !== 'poison', fn: p => { p.element = 'poison'; } },
+    { id: 'epoison2', icon: 'poison', color: '#6ebf35', name: 'Стихия: Яд II', desc: '+35% к урону от яда', cond: p => p.element === 'poison' && (p.build?.epoison || 0) >= 1, fn: p => { p.poisonDmgMult = (p.poisonDmgMult || 1) * 1.35; } },
+    { id: 'enet', icon: 'web', color: '#c9b1ff', name: 'Стихия: Паутина', desc: 'Урон опутывает сетью', cond: p => p.element !== 'web', fn: p => { p.element = 'web'; } },
+    { id: 'backshot', icon: 'backshot', color: '#8ecbff', name: 'Выстрел назад', desc: '+1 снаряд за спину', cond: p => p.backShots < 6, fn: p => { p.backShots++; } },
+    { id: 'backshot2', icon: 'backshot', color: '#6bb5ff', name: 'Выстрел назад II', desc: '+2 снаряда за спину', cond: p => p.backShots >= 1 && (p.build?.backshot || 0) >= 1, fn: p => { p.backShots = Math.min(6, p.backShots + 2); } },
+    { id: 'sideshot', icon: 'sideshot', color: '#6ee7ff', name: 'Выстрелы по бокам', desc: '+1 с каждой стороны', cond: p => p.sideShots < 5, fn: p => { p.sideShots++; } },
+    { id: 'sideshot2', icon: 'sideshot', color: '#4dd4ff', name: 'Выстрелы по бокам II', desc: '+2 с каждой стороны', cond: p => p.sideShots >= 1 && (p.build?.sideshot || 0) >= 1, fn: p => { p.sideShots = Math.min(5, p.sideShots + 2); } },
     { id: 'melee', icon: 'slash',   color: '#ff7a3d', name: 'Ближний бой',desc: 'Авто-удар по ближним врагам', cond: p => !p.melee, fn: p => { p.melee = true; p.meleeDmg += 12; } },
-    { id: 'shield',icon: 'shield',  color: '#6ee7ff', name: 'Щит',        desc: '+20 щита',                   cond: () => true, fn: p => { p.shield = Math.min(80, p.shield + 20); } },
-    { id: 'w_necro', icon: 'slash', color: '#9bd7ff', name: 'Некромант', desc: 'Оружие: призыв миньонов вместо стрельбы', cond: p => p.weapon !== 'necro', fn: p => { p.bombMode = false; p.weapon = 'necro'; } },
-    { id: 'w_fan', icon: 'multi', color: '#7ce7a2', name: 'Веер', desc: 'Оружие: широкий веер лёгких снарядов', cond: p => p.weapon !== 'fan', fn: p => { p.bombMode = false; p.weapon = 'fan'; } },
+    { id: 'melee2', icon: 'slash',  color: '#ff5c2a', name: 'Ближний бой II',desc: '+50% к урону ближнего боя', cond: p => p.melee && (p.build?.melee || 0) >= 1, fn: p => { p.meleeDmg *= 1.5; } },
+    { id: 'shield',icon: 'shield',  color: '#6ee7ff', name: 'Щит',        desc: '+20 щита',                   cond: () => true, fn: p => { p.shield = Math.min(100, p.shield + 20); } },
+    { id: 'shield2',icon: 'shield', color: '#4dd4ff', name: 'Щит II',     desc: '+30 щита',                   cond: p => (p.build?.shield || 0) >= 1, fn: p => { p.shield = Math.min(100, p.shield + 30); } },
+    { id: 'w_necro', icon: 'slash', color: '#9bd7ff', name: 'Некромант', desc: 'Оружие: призыв миньонов', cond: p => p.weapon !== 'necro', fn: p => { p.bombMode = false; p.weapon = 'necro'; } },
+    { id: 'w_fan', icon: 'multi', color: '#7ce7a2', name: 'Веер', desc: 'Оружие: широкий веер снарядов', cond: p => p.weapon !== 'fan', fn: p => { p.bombMode = false; p.weapon = 'fan'; } },
     { id: 'w_shotgun', icon: 'shotgun', color: '#ffd23e', name: 'Дробовик', desc: 'Оружие: 6 стрел веером', cond: p => p.weapon !== 'shotgun', fn: p => { p.bombMode = false; p.weapon = 'shotgun'; } },
-    { id: 'w_rapid', icon: 'rapid', color: '#38e08c', name: 'Пулемёт', desc: 'Оружие: очень быстрая стрельба', cond: p => p.weapon !== 'rapid', fn: p => { p.bombMode = false; p.weapon = 'rapid'; } },
-    { id: 'w_sniper', icon: 'sniper', color: '#b18cff', name: 'Снайпер', desc: 'Оружие: тяжёлый выстрел с пробоем', cond: p => p.weapon !== 'sniper', fn: p => { p.bombMode = false; p.weapon = 'sniper'; } },
+    { id: 'w_rapid', icon: 'rapid', color: '#38e08c', name: 'Пулемёт', desc: 'Оружие: быстрая стрельба', cond: p => p.weapon !== 'rapid', fn: p => { p.bombMode = false; p.weapon = 'rapid'; } },
+    { id: 'w_sniper', icon: 'sniper', color: '#b18cff', name: 'Снайпер', desc: 'Оружие: тяжёлый выстрел', cond: p => p.weapon !== 'sniper', fn: p => { p.bombMode = false; p.weapon = 'sniper'; } },
     { id: 'w_twin', icon: 'twin', color: '#6ee7ff', name: 'Близнецы', desc: 'Оружие: двойной выстрел', cond: p => p.weapon !== 'twin', fn: p => { p.bombMode = false; p.weapon = 'twin'; } },
-    { id: 'w_laser', icon: 'laser', color: '#ff3b6b', name: 'Лазер', desc: 'Оружие: пронзающий луч с поджогом', cond: p => p.weapon !== 'laser', fn: p => { p.bombMode = false; p.weapon = 'laser'; } },
-    { id: 'w_boomerang', icon: 'bounce', color: '#ffae42', name: 'Бумеранг', desc: 'Оружие: бьёт на пути туда и обратно', cond: p => p.weapon !== 'boomerang', fn: p => { p.bombMode = false; p.weapon = 'boomerang'; } },
-    { id: 'w_claws', icon: 'slash', color: '#38e08c', name: 'Когти', desc: 'Оружие: быстрые режущие удары перед собой', cond: p => p.weapon !== 'claws', fn: p => { p.bombMode = false; p.weapon = 'claws'; } },
-    { id: 'w_bomb', icon: 'droplet', color: '#ffae42', name: 'Бомбомёт', desc: 'Оружие: вместо стрел — бомбы-кружки', cond: p => p.weapon !== 'bomb', fn: p => enterBombMode(p) }
+    { id: 'w_laser', icon: 'laser', color: '#ff3b6b', name: 'Лазер', desc: 'Оружие: пронзающий луч', cond: p => p.weapon !== 'laser', fn: p => { p.bombMode = false; p.weapon = 'laser'; } },
+    { id: 'w_boomerang', icon: 'bounce', color: '#ffae42', name: 'Бумеранг', desc: 'Оружие: бьёт туда-обратно', cond: p => p.weapon !== 'boomerang', fn: p => { p.bombMode = false; p.weapon = 'boomerang'; } },
+    { id: 'w_claws', icon: 'slash', color: '#38e08c', name: 'Когти', desc: 'Оружие: быстрые удары', cond: p => p.weapon !== 'claws', fn: p => { p.bombMode = false; p.weapon = 'claws'; } },
+    { id: 'w_bomb', icon: 'droplet', color: '#ffae42', name: 'Бомбомёт', desc: 'Оружие: бомбы-кружки', cond: p => p.weapon !== 'bomb', fn: p => enterBombMode(p) },
+    { id: 'w_spiral', icon: 'bolt', color: '#ff6b9d', name: 'Спираль', desc: 'Оружие: спиральные снаряды', cond: p => p.weapon !== 'spiral', fn: p => { p.bombMode = false; p.weapon = 'spiral'; } },
+    { id: 'w_orbit', icon: 'shield', color: '#a58cff', name: 'Орбита', desc: 'Оружие: вращающиеся снаряды', cond: p => p.weapon !== 'orbit', fn: p => { p.bombMode = false; p.weapon = 'orbit'; } },
+    { id: 'w_wave', icon: 'pulse', color: '#57c8ff', name: 'Волна', desc: 'Оружие: волновой выстрел', cond: p => p.weapon !== 'wave', fn: p => { p.bombMode = false; p.weapon = 'wave'; } }
   ];
 
   function xpNextFor(level) {
@@ -276,12 +306,33 @@ const BUILD_VECTORS = {
     icon: 'sword',
     color: '#ff7a3d'
   },
+  dmg2: {
+    name: 'Урон II',
+    cond: p => !p.bombMode && (p.build?.dmg || 0) >= 1,
+    fn: p => { p.dmg *= 1.3; },
+    icon: 'sword',
+    color: '#ff5c2a'
+  },
+  dmg3: {
+    name: 'Урон III',
+    cond: p => !p.bombMode && (p.build?.dmg2 || 0) >= 1,
+    fn: p => { p.dmg *= 1.35; },
+    icon: 'sword',
+    color: '#ff3d1a'
+  },
   crit: {
     name: 'Крит',
     cond: p => !p.bombMode,
     fn: p => { p.critChance += 0.1; },
     icon: 'star',
     color: '#ffd23e'
+  },
+  crit2: {
+    name: 'Крит II',
+    cond: p => !p.bombMode && (p.build?.crit || 0) >= 1,
+    fn: p => { p.critChance += 0.12; p.critMult = (p.critMult || 2) + 0.5; },
+    icon: 'star',
+    color: '#ffc400'
   },
   rate: {
     name: 'Огонь',
@@ -290,28 +341,77 @@ const BUILD_VECTORS = {
     icon: 'bolt',
     color: '#ffd23e'
   },
+  rate2: {
+    name: 'Огонь II',
+    cond: p => (p.build?.rate || 0) >= 1,
+    fn: p => { p.rate *= 0.8; },
+    icon: 'bolt',
+    color: '#ffb700'
+  },
+  rate3: {
+    name: 'Огонь III',
+    cond: p => (p.build?.rate2 || 0) >= 1,
+    fn: p => { p.rate *= 0.77; },
+    icon: 'bolt',
+    color: '#ff9500'
+  },
   
   // --- Weapon Vectors ---
   multi: {
-    name: 'Мультивыстрел',
+    name: 'Мультивыстрел x2',
     cond: () => true,
-    fn: p => { p.frontAdd = Math.min(8, p.frontAdd + 1); },
+    fn: p => { p.frontAdd = Math.min(10, p.frontAdd + 1); },
     icon: 'multi',
     color: '#38e08c'
   },
+  multi2: {
+    name: 'Мультивыстрел x3',
+    cond: p => (p.build?.multi || 0) >= 1,
+    fn: p => { p.frontAdd = Math.min(10, p.frontAdd + 1); },
+    icon: 'multi',
+    color: '#2ecc71'
+  },
+  multi3: {
+    name: 'Мультивыстрел x4',
+    cond: p => (p.build?.multi2 || 0) >= 1,
+    fn: p => { p.frontAdd = Math.min(10, p.frontAdd + 1); },
+    icon: 'multi',
+    color: '#27ae60'
+  },
+  multi4: {
+    name: 'Мультивыстрел x5',
+    cond: p => (p.build?.multi3 || 0) >= 1,
+    fn: p => { p.frontAdd = Math.min(10, p.frontAdd + 2); },
+    icon: 'multi',
+    color: '#1e8449'
+  },
   backshot: {
     name: 'Выстрел назад',
-    cond: p => p.backShots < 5,
+    cond: p => p.backShots < 6,
     fn: p => { p.backShots++; },
     icon: 'backshot',
     color: '#8ecbff'
   },
+  backshot2: {
+    name: 'Выстрел назад II',
+    cond: p => p.backShots >= 1 && (p.build?.backshot || 0) >= 1,
+    fn: p => { p.backShots = Math.min(6, p.backShots + 2); },
+    icon: 'backshot',
+    color: '#6bb5ff'
+  },
   sideshot: {
     name: 'Выстрелы по бокам',
-    cond: p => p.sideShots < 4,
+    cond: p => p.sideShots < 5,
     fn: p => { p.sideShots++; },
     icon: 'sideshot',
     color: '#6ee7ff'
+  },
+  sideshot2: {
+    name: 'Выстрелы по бокам II',
+    cond: p => p.sideShots >= 1 && (p.build?.sideshot || 0) >= 1,
+    fn: p => { p.sideShots = Math.min(5, p.sideShots + 2); },
+    icon: 'sideshot',
+    color: '#4dd4ff'
   },
   aspeed: {
     name: 'Скорость снаряда',
@@ -320,6 +420,13 @@ const BUILD_VECTORS = {
     icon: 'arrow',
     color: '#b18cff'
   },
+  aspeed2: {
+    name: 'Скорость снаряда II',
+    cond: p => isArrowWeapon(p) && (p.build?.aspeed || 0) >= 1,
+    fn: p => { p.arrowSpeed *= 1.3; },
+    icon: 'arrow',
+    color: '#9b59b6'
+  },
   pierce: {
     name: 'Пробой',
     cond: p => isArrowWeapon(p),
@@ -327,12 +434,26 @@ const BUILD_VECTORS = {
     icon: 'pierce',
     color: '#ff9e6e'
   },
+  pierce2: {
+    name: 'Пробой II',
+    cond: p => isArrowWeapon(p) && (p.build?.pierce || 0) >= 1,
+    fn: p => { p.pierce += 2; },
+    icon: 'pierce',
+    color: '#ff8547'
+  },
   bounce: {
     name: 'Рикошет',
     cond: p => isArrowWeapon(p),
     fn: p => { p.ricochet += 1; },
     icon: 'bounce',
     color: '#8ecbff'
+  },
+  bounce2: {
+    name: 'Рикошет II',
+    cond: p => isArrowWeapon(p) && (p.build?.bounce || 0) >= 1,
+    fn: p => { p.ricochet += 2; },
+    icon: 'bounce',
+    color: '#6bb5ff'
   },
   through: {
     name: 'Пропускание стен',
@@ -350,6 +471,13 @@ const BUILD_VECTORS = {
     icon: 'fire',
     color: '#ff7a3d'
   },
+  efire2: {
+    name: 'Стихия: Огонь II',
+    cond: p => p.element === 'fire' && (p.build?.efire || 0) >= 1,
+    fn: p => { p.fireDmgMult = (p.fireDmgMult || 1) * 1.3; },
+    icon: 'fire',
+    color: '#ff5c2a'
+  },
   eice: {
     name: 'Стихия: Лёд',
     cond: p => p.element !== 'ice',
@@ -357,12 +485,26 @@ const BUILD_VECTORS = {
     icon: 'ice',
     color: '#57c8ff'
   },
+  eice2: {
+    name: 'Стихия: Лёд II',
+    cond: p => p.element === 'ice' && (p.build?.eice || 0) >= 1,
+    fn: p => { p.iceDurationMult = (p.iceDurationMult || 1) * 1.4; },
+    icon: 'ice',
+    color: '#3db5e8'
+  },
   epoison: {
     name: 'Стихия: Яд',
     cond: p => p.element !== 'poison',
     fn: p => { p.element = 'poison'; },
     icon: 'poison',
     color: '#8bd450'
+  },
+  epoison2: {
+    name: 'Стихия: Яд II',
+    cond: p => p.element === 'poison' && (p.build?.epoison || 0) >= 1,
+    fn: p => { p.poisonDmgMult = (p.poisonDmgMult || 1) * 1.35; },
+    icon: 'poison',
+    color: '#6ebf35'
   },
   enet: {
     name: 'Стихия: Паутина',
@@ -380,6 +522,13 @@ const BUILD_VECTORS = {
     icon: 'heart',
     color: '#ff4d6d'
   },
+  hp2: {
+    name: 'Прочность II',
+    cond: p => (p.build?.hp || 0) >= 1,
+    fn: p => { p.maxHp += 30; p.hp += 30; },
+    icon: 'heart',
+    color: '#ff2a55'
+  },
   speed: {
     name: 'Скорость',
     cond: () => true,
@@ -387,12 +536,26 @@ const BUILD_VECTORS = {
     icon: 'speed',
     color: '#6ee7ff'
   },
+  speed2: {
+    name: 'Скорость II',
+    cond: p => (p.build?.speed || 0) >= 1,
+    fn: p => { p.speed *= 1.12; },
+    icon: 'speed',
+    color: '#4dd4ff'
+  },
   shield: {
     name: 'Щит',
     cond: () => true,
-    fn: p => { p.shield = Math.min(80, p.shield + 20); },
+    fn: p => { p.shield = Math.min(100, p.shield + 20); },
     icon: 'shield',
     color: '#6ee7ff'
+  },
+  shield2: {
+    name: 'Щит II',
+    cond: p => (p.build?.shield || 0) >= 1,
+    fn: p => { p.shield = Math.min(100, p.shield + 30); },
+    icon: 'shield',
+    color: '#4dd4ff'
   },
   magnet: {
     name: 'Магнит',
@@ -401,12 +564,26 @@ const BUILD_VECTORS = {
     icon: 'magnet',
     color: '#7ce7a2'
   },
+  magnet2: {
+    name: 'Магнит II',
+    cond: p => (p.build?.magnet || 0) >= 1,
+    fn: p => { p.magnet *= 1.5; },
+    icon: 'magnet',
+    color: '#58d68d'
+  },
   regen: {
     name: 'Реген',
     cond: () => true,
     fn: p => { p.regen += 1.5; },
     icon: 'pulse',
     color: '#a5ffd6'
+  },
+  regen2: {
+    name: 'Реген II',
+    cond: p => (p.build?.regen || 0) >= 1,
+    fn: p => { p.regen += 2; },
+    icon: 'pulse',
+    color: '#7fffd4'
   },
   vamp: {
     name: 'Вампиризм',
@@ -415,9 +592,16 @@ const BUILD_VECTORS = {
     icon: 'droplet',
     color: '#ff5a8f'
   },
+  vamp2: {
+    name: 'Вампиризм II',
+    cond: p => (p.build?.vamp || 0) >= 1,
+    fn: p => { p.vampirism += 0.12; },
+    icon: 'droplet',
+    color: '#ff3372'
+  },
   healUp: {
     name: 'Лечение',
-    cond: p => (p.healingMult || 1) < 3,
+    cond: p => (p.healingMult || 1) < 4,
     fn: p => { p.healingMult = (p.healingMult || 1) * 1.25; },
     icon: 'heart',
     color: '#a5ffd6'
@@ -429,6 +613,13 @@ const BUILD_VECTORS = {
     icon: 'slash',
     color: '#ff7a3d'
   },
+  melee2: {
+    name: 'Ближний бой II',
+    cond: p => p.melee && (p.build?.melee || 0) >= 1,
+    fn: p => { p.meleeDmg *= 1.5; },
+    icon: 'slash',
+    color: '#ff5c2a'
+  },
   
   // --- Bomb Vectors ---
   bomb: {
@@ -437,6 +628,106 @@ const BUILD_VECTORS = {
     fn: p => { p.bombRadiusMult = (p.bombRadiusMult || 1) * 1.15; },
     icon: 'droplet',
     color: '#ffae42'
+  },
+  bomb2: {
+    name: 'Бомба II',
+    cond: p => p.weapon === 'bomb' && (p.build?.bomb || 0) >= 1,
+    fn: p => { p.bombRadiusMult = (p.bombRadiusMult || 1) * 1.2; },
+    icon: 'droplet',
+    color: '#ff9500'
+  },
+  
+  // --- Weapon Type Vectors ---
+  w_necro: {
+    name: 'Некромант',
+    cond: p => p.weapon !== 'necro',
+    fn: p => { p.bombMode = false; p.weapon = 'necro'; },
+    icon: 'slash',
+    color: '#9bd7ff'
+  },
+  w_fan: {
+    name: 'Веер',
+    cond: p => p.weapon !== 'fan',
+    fn: p => { p.bombMode = false; p.weapon = 'fan'; },
+    icon: 'multi',
+    color: '#7ce7a2'
+  },
+  w_shotgun: {
+    name: 'Дробовик',
+    cond: p => p.weapon !== 'shotgun',
+    fn: p => { p.bombMode = false; p.weapon = 'shotgun'; },
+    icon: 'shotgun',
+    color: '#ffd23e'
+  },
+  w_rapid: {
+    name: 'Пулемёт',
+    cond: p => p.weapon !== 'rapid',
+    fn: p => { p.bombMode = false; p.weapon = 'rapid'; },
+    icon: 'rapid',
+    color: '#38e08c'
+  },
+  w_sniper: {
+    name: 'Снайпер',
+    cond: p => p.weapon !== 'sniper',
+    fn: p => { p.bombMode = false; p.weapon = 'sniper'; },
+    icon: 'sniper',
+    color: '#b18cff'
+  },
+  w_twin: {
+    name: 'Близнецы',
+    cond: p => p.weapon !== 'twin',
+    fn: p => { p.bombMode = false; p.weapon = 'twin'; },
+    icon: 'twin',
+    color: '#6ee7ff'
+  },
+  w_laser: {
+    name: 'Лазер',
+    cond: p => p.weapon !== 'laser',
+    fn: p => { p.bombMode = false; p.weapon = 'laser'; },
+    icon: 'laser',
+    color: '#ff3b6b'
+  },
+  w_boomerang: {
+    name: 'Бумеранг',
+    cond: p => p.weapon !== 'boomerang',
+    fn: p => { p.bombMode = false; p.weapon = 'boomerang'; },
+    icon: 'bounce',
+    color: '#ffae42'
+  },
+  w_claws: {
+    name: 'Когти',
+    cond: p => p.weapon !== 'claws',
+    fn: p => { p.bombMode = false; p.weapon = 'claws'; },
+    icon: 'slash',
+    color: '#38e08c'
+  },
+  w_bomb: {
+    name: 'Бомбомёт',
+    cond: p => p.weapon !== 'bomb',
+    fn: p => enterBombMode(p),
+    icon: 'droplet',
+    color: '#ffae42'
+  },
+  w_spiral: {
+    name: 'Спираль',
+    cond: p => p.weapon !== 'spiral',
+    fn: p => { p.bombMode = false; p.weapon = 'spiral'; },
+    icon: 'bolt',
+    color: '#ff6b9d'
+  },
+  w_orbit: {
+    name: 'Орбита',
+    cond: p => p.weapon !== 'orbit',
+    fn: p => { p.bombMode = false; p.weapon = 'orbit'; },
+    icon: 'shield',
+    color: '#a58cff'
+  },
+  w_wave: {
+    name: 'Волна',
+    cond: p => p.weapon !== 'wave',
+    fn: p => { p.bombMode = false; p.weapon = 'wave'; },
+    icon: 'pulse',
+    color: '#57c8ff'
   }
 };
 
@@ -495,8 +786,8 @@ const AVAILABLE_VECTORS = [
     bombPoison: { letter: 'Y', color: '#8bd450', dur: 0, name: 'Ядовитая бомба' },
     net:    { letter: 'N', color: '#c9b1ff', dur: 0,  name: 'Сеть' }
   };
-  const PU_BARREL = ['power', 'haste', 'swift', 'magnet', 'multi', 'vamp', 'shield', 'heal',
-    'bomb', 'bomb', 'bomb', 'bombFreeze', 'bombFire', 'bombPoison', 'net'];
+  const PU_BARREL = ['power', 'haste', 'swift', 'magnet', 'heal',
+    'bomb', 'bombFreeze', 'bombFire', 'bombPoison', 'net'];
 
   function freeSpot() {
     for (let i = 0; i < 30; i++) {
@@ -1224,6 +1515,38 @@ const AVAILABLE_VECTORS = [
     SFX.shoot();
   }
 
+  function fireSpiral(p, aim, dmg, spd, pierce, bounces, passWalls, elem) {
+    const rotations = 3;
+    for (let i = 0; i < rotations; i++) {
+      const a = aim + (i / rotations) * TAU;
+      G.projectiles.push(createProjectile(p.x, p.y, a, dmg, spd, pierce, bounces, passWalls, elem));
+    }
+    SFX.shoot();
+  }
+
+  function fireOrbit(p, dmg, pierce, bounces, passWalls, elem) {
+    const count = 4;
+    for (let i = 0; i < count; i++) {
+      const a = (i / count) * TAU + Math.atan2(G.player.y - p.y, G.player.x - p.x);
+      const proj = createProjectile(p.x, p.y, a, dmg, 180, pierce, bounces, passWalls, elem);
+      proj.orbit = true;
+      proj.orbitCenter = { x: p.x, y: p.y };
+      proj.orbitSpeed = 2.5;
+      G.projectiles.push(proj);
+    }
+    SFX.shoot();
+  }
+
+  function fireWave(p, aim, dmg, spd, pierce, bounces, passWalls, elem) {
+    const waveCount = 5;
+    for (let i = 0; i < waveCount; i++) {
+      const offset = (i - (waveCount - 1) / 2) * 0.15;
+      const a = aim + offset;
+      G.projectiles.push(createProjectile(p.x, p.y, a, dmg, spd, pierce, bounces, passWalls, elem));
+    }
+    SFX.shoot();
+  }
+
   function playerShoot(p) {
     const w = p.bombMode ? WEAPONS.bomb : (WEAPONS[p.weapon] || WEAPONS.bow);
     const cd = w.cd * p.rate * (p.buff.haste > 0 ? 0.6 : 1);
@@ -1255,6 +1578,9 @@ const AVAILABLE_VECTORS = [
     if (w.kind === 'boomerang') { fireBoomerang(p, p.aim); p.shootTimer = cd; return; }
     if (w.kind === 'claws') { fireClaws(p); p.shootTimer = cd; return; }
     if (w.kind === 'necro') { spawnNecro(p); p.shootTimer = cd; return; }
+    if (w.kind === 'spiral') { fireSpiral(p, p.aim, dmg, spd, pierce, bounces, passWalls, elem); p.shootTimer = cd; return; }
+    if (w.kind === 'orbit') { fireOrbit(p, dmg, pierce, bounces, passWalls, elem); p.shootTimer = cd; return; }
+    if (w.kind === 'wave') { fireWave(p, p.aim, dmg, spd, pierce, bounces, passWalls, elem); p.shootTimer = cd; return; }
 
     const aim = p.aim;
     const n = w.burst + p.frontAdd + (p.buff.multi > 0 ? 2 : 0);
@@ -1742,31 +2068,51 @@ const AVAILABLE_VECTORS = [
     multi:  { parent: null,      tier: 0, angle: 90 },
 
     // Ring 1
-    crit:     { parent: 'dmg',     tier: 1, angle: -125 },
-    rate:     { parent: 'dmg',     tier: 1, angle: -55 },
+    dmg2:     { parent: 'dmg',     tier: 1, angle: -110 },
+    crit:     { parent: 'dmg',     tier: 1, angle: -135 },
+    rate:     { parent: 'dmg',     tier: 1, angle: -65 },
     shield:   { parent: 'hp',      tier: 1, angle: 207 },
-    regen:    { parent: 'hp',      tier: 1, angle: 180 },
+    regen:    { parent: 'hp',      tier: 1, angle: 170 },
     healUp:   { parent: 'hp',      tier: 1, angle: 153 },
     magnet:   { parent: 'speed',   tier: 1, angle: -25 },
     aspeed:   { parent: 'speed',   tier: 1, angle: 25 },
-    backshot: { parent: 'multi',   tier: 1, angle: 55 },
-    sideshot: { parent: 'multi',   tier: 1, angle: 80 },
-    pierce:   { parent: 'multi',   tier: 1, angle: 106 },
-    epoison:  { parent: 'multi',   tier: 1, angle: 132 },
+    multi2:   { parent: 'multi',   tier: 1, angle: 70 },
+    backshot: { parent: 'multi',   tier: 1, angle: 50 },
+    sideshot: { parent: 'multi',   tier: 1, angle: 90 },
+    pierce:   { parent: 'multi',   tier: 1, angle: 110 },
+    epoison:  { parent: 'multi',   tier: 1, angle: 130 },
 
     // Ring 2
-    bounce:  { parent: 'rate',     tier: 2, angle: -78 },
-    through: { parent: 'rate',     tier: 2, angle: -32 },
-    vamp:    { parent: 'regen',    tier: 2, angle: 180 },
-    melee:   { parent: 'sideshot', tier: 2, angle: 68 },
-    efire:   { parent: 'epoison',  tier: 2, angle: 114 },
-    enet:    { parent: 'epoison',  tier: 2, angle: 132 },
+    dmg3:    { parent: 'dmg2',     tier: 2, angle: -100 },
+    crit2:   { parent: 'crit',     tier: 2, angle: -145 },
+    rate2:   { parent: 'rate',     tier: 2, angle: -55 },
+    bounce:  { parent: 'rate',     tier: 2, angle: -75 },
+    through: { parent: 'rate',     tier: 2, angle: -35 },
+    hp2:     { parent: 'shield',   tier: 2, angle: 217 },
+    shield2: { parent: 'shield',   tier: 2, angle: 197 },
+    vamp:    { parent: 'regen',    tier: 2, angle: 170 },
+    regen2:  { parent: 'regen',    tier: 2, angle: 150 },
+    melee:   { parent: 'sideshot', tier: 2, angle: 80 },
+    efire:   { parent: 'epoison',  tier: 2, angle: 120 },
+    enet:    { parent: 'epoison',  tier: 2, angle: 135 },
     eice:    { parent: 'epoison',  tier: 2, angle: 150 },
+    speed2:  { parent: 'magnet',   tier: 2, angle: -15 },
+    magnet2: { parent: 'magnet',   tier: 2, angle: -35 },
+    aspeed2: { parent: 'aspeed',   tier: 2, angle: 35 },
+    multi3:  { parent: 'multi2',   tier: 2, angle: 65 },
+    backshot2: { parent: 'backshot', tier: 2, angle: 40 },
+    sideshot2: { parent: 'sideshot', tier: 2, angle: 100 },
+    pierce2: { parent: 'pierce',   tier: 2, angle: 120 },
 
     // Ring 3 — deepest upgrades
-    bomb:    { parent: 'through',  tier: 3, angle: -10 }
+    bomb:    { parent: 'through',  tier: 3, angle: -25 },
+    rate3:   { parent: 'rate2',    tier: 3, angle: -45 },
+    multi4:  { parent: 'multi3',   tier: 3, angle: 60 },
+    efire2:  { parent: 'efire',    tier: 3, angle: 115 },
+    eice2:   { parent: 'eice',     tier: 3, angle: 145 },
+    epoison2:{ parent: 'enet',     tier: 3, angle: 130 }
   };
-  const TREE_RING_R = [170, 340, 500, 640];
+  const TREE_RING_R = [170, 320, 470, 620];
 
   // Resolve polar coords to pixel offsets and size the logical canvas.
   const TREE_NODE_R = 34;
