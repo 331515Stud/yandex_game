@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>NEEDLE.IO — арена</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="game"></canvas>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div class="hud-row">
+      <div class="hud-stat"><span id="hud-level">Lv 1</span></div>
+      <div class="hud-stat"><span id="hud-weapon">Лук</span></div>
+      <div class="hud-stat"><span id="hud-bombs">B 0</span></div>
+      <div class="hud-stat"><span id="hud-kills">Kills 0</span></div>
+      <div class="hud-stat"><span id="hud-time">0:00</span></div>
+    </div>
+    <div class="hud-bar hp">
+      <div class="hud-bar-fill" id="hud-hp"></div>
+    </div>
+    <div class="hud-bar xp">
+      <div class="hud-bar-fill" id="hud-xp"></div>
+    </div>
+    <div id="buffbar"></div>
+    <div id="status-chips"></div>
+    <div id="bossbar-wrap" class="hidden">
+      <div class="boss-label">BOSS</div>
+      <div class="boss-bar"><div class="boss-bar-fill" id="boss-bar-fill"></div></div>
+    </div>
+  </div>
+
+  <!-- Banner (boss announce etc) -->
+  <div id="banner" class="hidden"></div>
+
+  <!-- Dash indicator -->
+  <div class="dash-ind" id="dash-ind"><span>РЫВОК</span><div class="dash-fill" id="dash-fill"></div></div>
+
+  <!-- Pause overlay -->
+  <div id="pause-overlay" class="hidden">
+    <h2>ПАУЗА</h2>
+    <button id="btn-pause-resume">Продолжить [P]</button>
+    <button id="btn-pause-restart">Заново</button>
+    <div class="pause-ads">
+      <button id="btn-rew-xp">Реклама: двойной опыт 30с</button>
+      <button id="btn-rew-dmg">Реклама: урон x2 20с</button>
+    </div>
+    <p class="hint">Нажми P или Esc, чтобы продолжить</p>
+  </div>
+
+<!-- Skill tree (level-up graph) -->
+<div id="upgrade-panel" class="hidden">
+  <div class="tree-header">
+    <h2>УРОВЕНЬ ВЫШЕ</h2>
+    <p class="subtitle" id="tree-subtitle">Выбери вершину графа и подтверди</p>
+  </div>
+  <div id="tree-viewport">
+    <div id="tree-canvas"></div>
+    <div class="tree-zoom-hint">Перетаскивание — обзор · колесо / щипок — зум</div>
+  </div>
+  <div id="tree-detail">
+    <div id="tree-detail-icon"></div>
+    <div id="tree-detail-body">
+      <div id="tree-detail-name">Выбери вершину</div>
+      <div id="tree-detail-desc">Нажми на вершину графа, чтобы увидеть улучшение</div>
+      <div id="tree-detail-status"></div>
+    </div>
+    <button id="btn-tree-confirm" disabled>ВЗЯТЬ</button>
+  </div>
+</div>
+
+  <!-- Start screen -->
+  <div id="start-screen">
+    <h1>NEEDLE.IO</h1>
+    <p>WASD / стрелки — движение</p>
+    <p>Мышь — прицел, стрельба автоматическая</p>
+    <p>Пробел — рывок · P — пауза</p>
+    <p>Sабиры кристаллы и убивай ботов</p>
+    <p id="start-best"></p>
+    <button id="btn-start">ИГРАТЬ</button>
+  </div>
+
+  <!-- Game over screen -->
+  <div id="over-screen" class="hidden">
+    <h2>ТЫ ПОГИБ</h2>
+    <div id="over-stats"></div>
+    <button id="btn-revive" class="hidden">Продолжить за просмотр рекламы</button>
+    <button id="btn-restart">ЕЩЁ РАЗ</button>
+  </div>
+
+  <!-- Touch joystick (mobile) -->
+  <div id="joy" class="hidden"></div>
+  <div id="joy-knob" class="hidden"></div>
+
+  <!-- Build panel -->
+  <button id="btn-build">СБОРКА</button>
+  <div id="build-panel" class="hidden">
+    <div class="build-title">Твоя сборка</div>
+    <div id="build-list"></div>
+    <button id="btn-build-close">ЗАКРЫТЬ</button>
+  </div>
+
+  <script src="sdk.js?v=25"></script>
+  <script src="game.js?v=25"></script>
+</body>
+</html>
