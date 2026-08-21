@@ -2173,12 +2173,41 @@ const AVAILABLE_VECTORS = [
     w_orbit:  { parent: 'multi2',  tier: 2, angle: 30 },
     w_wave:   { parent: 'multi3',  tier: 3, angle: 20 }
   };
-  const TREE_RING_R = [300, 650, 1050, 1500];
+  const TREE_RING_R = [600, 1300, 2100, 3000];
+const MIN_ANGLE_SEP = 25; // Минимальный угол между детьми одного родителя (градусы)
 
   // Resolve polar coords to pixel offsets and size the logical canvas.
   const TREE_NODE_R = 34;
   let TREE_W = 0, TREE_H = 0, TREE_HUB = { x: 0, y: 0 };
   (function layoutTree() {
+    // Группируем детей по родителям
+    const childrenByParent = {};
+    for (const id in SKILL_TREE) {
+      const n = SKILL_TREE[id];
+      if (n.parent !== null) {
+        if (!childrenByParent[n.parent]) childrenByParent[n.parent] = [];
+        childrenByParent[n.parent].push({ id, node: n });
+      }
+    }
+    
+    // Сортируем детей каждого родителя по углу и пересчитываем углы
+    for (const parentId in childrenByParent) {
+      const children = childrenByParent[parentId];
+      if (children.length === 0) continue;
+      
+      // Сортируем по исходному углу
+      children.sort((a, b) => a.node.angle - b.node.angle);
+      
+      // Пересчитываем углы с равномерным распределением
+      const totalSpan = Math.max(children.length * MIN_ANGLE_SEP, 60);
+      const startAngle = children[0].node.angle - totalSpan / 2;
+      const step = totalSpan / Math.max(children.length - 1, 1);
+      
+      children.forEach((child, idx) => {
+        child.node.angle = startAngle + step * idx;
+      });
+    }
+    
     const pad = TREE_NODE_R + 52;
     let minX = 0, maxX = 0, minY = 0, maxY = 0;
     for (const id in SKILL_TREE) {
